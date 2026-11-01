@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>62歳nuruboのAI4人シェアハウス 公式サイト</title>
-  <!-- Google Identity Services -->
+  <!-- Google公式認証ライブラリ (Google Identity Services) -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     :root {
@@ -116,7 +116,7 @@
       font-weight: 500;
       margin-bottom: 6px;
     }
-    .form-group input, .form-group select, .form-group textarea {
+    .form-group select, .form-group textarea {
       width: 100%;
       padding: 10px;
       border: 1px solid var(--border);
@@ -150,7 +150,7 @@
 
   <header>
     <h1>62歳nuruboのAI4人シェアハウス</h1>
-    <p>家主・ヌルボ（62歳）と個性豊かなAI4人が織りなす日常ホームコメディ＆ライフハック</p>
+    <p>家主・ヌルボ（62歳）と個性豊かなAI4人が織りなす日常ホームコメディ＆生活密着ライフハック</p>
   </header>
 
   <div class="container">
@@ -201,19 +201,23 @@
       </div>
     </div>
 
-    <!-- お問い合わせセクション（Google認証付き） -->
+    <!-- お問い合わせセクション -->
     <div class="card" id="contact-area">
       <h2>お問い合わせ</h2>
 
-      <!-- ステップ1：Google認証画面 -->
-      <div id="step-auth" style="text-align: center; padding: 20px 0;">
-        <p style="color: var(--text-sub); font-size: 0.95rem; margin-bottom: 20px;">
-          いたずら・スパム防止のため、Googleアカウント連携をお願いしております。<br>
-          下のボタンからGoogle連携を行うと、お問い合わせフォームへ進めます。
+      <!-- 【画面1】Google連携前（水色の枠組みデザイン） -->
+      <div id="step-auth" style="background-color: #f0f7ff; border-radius: 16px; padding: 32px 20px; text-align: center; border: 1px solid #d2e3fc; margin: 10px 0;">
+        <h3 style="color: #0b57d0; font-size: 1.35rem; margin-top: 0; margin-bottom: 12px; font-weight: bold;">
+          Googleアカウントと連携してください
+        </h3>
+        
+        <p style="color: #444746; font-size: 0.95rem; line-height: 1.6; margin-bottom: 24px;">
+          ご連絡には、Googleアカウントとの連携が必要です。<br>
+          下のボタンから連携を完了すると、お問い合わせ画面へ進めます。
         </p>
 
-        <!-- Google公式ログインボタン -->
-        <div style="display: flex; justify-content: center; margin-bottom: 10px;">
+        <!-- メーラー立ち上がりを撤去し、Google公式認証ボタンを中央配置 -->
+        <div style="display: flex; justify-content: center; margin-bottom: 8px;">
           <div id="g_id_onload"
                data-client_id="YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
                data-callback="onGoogleAuthSuccess"
@@ -224,20 +228,22 @@
                data-size="large"
                data-theme="outline"
                data-text="continue_with"
-               data-shape="rectangular"
+               data-shape="pill"
                data-logo_alignment="left">
           </div>
         </div>
-        <p style="font-size: 0.8rem; color: #888; margin-top: 12px;">※連携はお名前・メールアドレスの確認のみに使用されます</p>
+
+        <p style="font-size: 0.8rem; color: #747775; margin-top: 14px; margin-bottom: 0;">
+          ※ボタンを押すとGoogleの公式認証画面が開きます
+        </p>
       </div>
 
-      <!-- ステップ2：認証完了後に表示されるフォーム -->
-      <div id="step-form" style="display: none;">
-        <!-- 認証バッジ -->
+      <!-- 【画面2】Google認証後に自動で切り替わる「入力フォーム」 -->
+      <div id="step-form" style="display: none; padding-top: 10px;">
         <div style="display: flex; align-items: center; gap: 12px; background: #e8f0fe; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px;">
           <img id="user-avatar" src="" alt="avatar" style="width: 40px; height: 40px; border-radius: 50%; display: none;">
           <div>
-            <div style="font-size: 0.8rem; color: #1a73e8; font-weight: bold;">✔ Googleアカウント認証完了</div>
+            <div style="font-size: 0.8rem; color: #1a73e8; font-weight: bold;">✔ Google認証完了</div>
             <div style="font-size: 0.95rem; color: #202124;">
               <span id="user-name" style="font-weight: bold;"></span> さん（<span id="user-email"></span>）
             </div>
@@ -264,7 +270,7 @@
         </form>
       </div>
 
-      <!-- ステップ3：送信完了画面 -->
+      <!-- 【画面3】送信完了画面 -->
       <div id="step-complete" style="display: none; text-align: center; padding: 30px 10px;">
         <h3 style="color: #1e8e3e; margin-bottom: 10px;">お問い合わせを送信しました！</h3>
         <p style="color: var(--text-sub); font-size: 0.95rem;">
@@ -281,8 +287,9 @@
   </footer>
 
   <script>
-    // Google認証成功時のコールバック
+    // Google認証成功時の処理
     function onGoogleAuthSuccess(response) {
+      // 戻ってきたトークンをデコードして名前とメアドを取り出す
       const base64Url = response.credential.split('.')[1];
       const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
       const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
@@ -291,7 +298,7 @@
 
       const user = JSON.parse(jsonPayload);
 
-      // ユーザー情報をセット
+      // ユーザー情報を画面に反映
       document.getElementById('user-name').innerText = user.name;
       document.getElementById('user-email').innerText = user.email;
       if (user.picture) {
@@ -300,15 +307,15 @@
         avatar.style.display = 'block';
       }
 
-      // 画面切り替え：連携ボタンを消してフォームを表示
+      // 認証画面を非表示にして、入力フォームを表示
       document.getElementById('step-auth').style.display = 'none';
       document.getElementById('step-form').style.display = 'block';
     }
 
-    // フォーム送信処理
+    // 送信ボタンが押された時の処理
     function handleFormSubmit(event) {
       event.preventDefault();
-      // 送信完了画面へ切り替え
+      // 入力フォームを隠して完了画面を表示
       document.getElementById('step-form').style.display = 'none';
       document.getElementById('step-complete').style.display = 'block';
     }
