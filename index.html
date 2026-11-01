@@ -119,43 +119,26 @@ h2{font-family:var(--display);font-weight:800;font-size:1.6rem;margin:0 0 6px;te
   max-width:540px;
   line-height:1.7;
 }
-.google-pill-box{
+.form-btn{
   display:inline-flex;
   align-items:center;
   gap:12px;
   background:#ffffff;
-  padding:10px 22px;
-  border-radius:999px;
-  border:1px solid #d2e3ea;
-  box-shadow:0 2px 6px rgba(18,58,94,0.06);
-  user-select:none;
-}
-.google-pill-label{
-  color:var(--ink-soft);
-  font-size:.95rem;
-}
-.google-pill-addr{
+  color:#1f1f1f;
   font-family:var(--display);
   font-weight:700;
-  color:var(--blue);
-  font-size:1rem;
-}
-.copy-pill-btn{
-  font:inherit;
-  font-size:.82rem;
-  font-weight:700;
-  border:1.5px solid var(--blue);
-  color:var(--blue);
-  background:var(--mist);
+  font-size:1.05rem;
+  text-decoration:none;
+  padding:14px 28px;
   border-radius:999px;
-  padding:4px 14px;
-  cursor:pointer;
-  transition:all .15s ease;
+  border:1px solid #c9d7de;
+  box-shadow:0 2px 8px rgba(18,58,94,0.10);
+  transition:box-shadow .15s ease,transform .15s ease;
 }
-.copy-pill-btn:hover{
-  background:var(--blue);
-  color:#fff;
-}
+.form-btn:hover{box-shadow:0 4px 14px rgba(18,58,94,0.18);transform:translateY(-1px)}
+.form-btn:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+.form-btn svg{width:22px;height:22px;flex:none}
+.form-note{font-size:.85rem !important;margin:14px auto 0 !important}
 .checklist-card{
   background:var(--mist);
   border:1px solid var(--line);
@@ -182,7 +165,7 @@ footer .motto{font-family:var(--display);font-weight:700;letter-spacing:.12em;co
   .hero .wrap{grid-template-columns:1fr;gap:20px;padding-block:24px 40px}
   nav a{padding:6px 8px;font-size:.85rem}
   .faq .a{padding-left:18px}
-  .google-pill-box{flex-direction:column;gap:8px;border-radius:18px;padding:14px 18px}
+  .form-btn{padding:13px 18px;font-size:.95rem;gap:10px}
 }
 @media (max-width:440px){
   .topics{grid-template-columns:1fr}
@@ -608,29 +591,21 @@ footer .flinks a:hover{color:var(--blue)}
       
       <div class="contact-wrap">
         <div class="google-auth-card">
-          <h3>Googleアカウントと連携してください</h3>
+          <h3>Google アカウントでログインして送れます</h3>
           <p>
-            いたずら・迷惑メール防止のため、お問い合わせには Google アカウントでの連携（ログイン）をお願いしております。下記の窓口よりフォームへお進みください。
+            いたずら・迷惑メール防止のため、お問い合わせは Google フォームで受け付けています。下のボタンを押すと Google のログイン画面が出ますので、ログインしてからご記入ください。お返事は、ログインした Google アカウントのメールアドレスにお送りします。
           </p>
 
-          <div style="display: flex; justify-content: center; margin-bottom: 14px;">
-            <div class="google-pill-box">
-              <span style="font-weight:800;letter-spacing:-0.5px;font-size:1.1rem;display:inline-flex;align-items:center;">
-                <span style="color:#4285F4;">G</span><span style="color:#EA4335;">o</span><span style="color:#FBBC05;">o</span><span style="color:#4285F4;">g</span><span style="color:#34A853;">l</span><span style="color:#EA4335;">e</span>
-              </span>
-              <span class="google-pill-label">窓口:</span>
-              <span class="google-pill-addr" id="mailAddr">umepyon@nuruboai.com</span>
-              <button class="copy-pill-btn" id="copyMailBtn" type="button">コピー</button>
-            </div>
-          </div>
+          <a class="form-btn" href="https://docs.google.com/forms/d/e/1FAIpQLSd-zVjsPrBVhOcm5djZEeRa6GIBf7vZwYw51ql5xSlpS5UIJg/viewform" target="_blank" rel="noopener">
+            <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
+            Google でログインして問い合わせる
+          </a>
 
-          <p style="font-size:0.85rem; color:var(--ink-soft); margin: 0 0 16px;">
-            ※メールソフトは起動しません。アドレスをコピーするか、下のフォームをご利用ください。
-          </p>
+          <p class="form-note">※ 新しいタブで Google フォームが開きます。Google アカウントをお持ちでない方は、無料で作成できます。</p>
         </div>
 
         <div class="checklist-card">
-          <h4>メールやフォームに書いてもらえると助かること</h4>
+          <h4>フォームに書いてもらえると助かること</h4>
           <ul class="checklist">
             <li>使っている機器の名前（例：プリンターの機種名）</li>
             <li>パソコンが Windows か Mac か</li>
@@ -651,37 +626,5 @@ footer .flinks a:hover{color:var(--blue)}
   </div>
 </footer>
 
-<script>
-(function(){
-  var btn = document.getElementById('copyMailBtn');
-  var mail = document.getElementById('mailAddr');
-  if(!btn || !mail) return;
-
-  function selectText(){
-    var r = document.createRange();
-    r.selectNodeContents(mail);
-    var s = getSelection();
-    s.removeAllRanges();
-    s.addRange(r);
-  }
-
-  btn.addEventListener('click', function(e){
-    e.preventDefault();
-    var done = function(){
-      btn.textContent = 'コピーしました！';
-      setTimeout(function(){ btn.textContent = 'コピー'; }, 1800);
-    };
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(mail.textContent.trim()).then(done, function(){
-        selectText();
-        btn.textContent = '選択しました';
-      });
-    } else {
-      selectText();
-      btn.textContent = '選択しました';
-    }
-  });
-})();
-</script>
 </body>
 </html>
