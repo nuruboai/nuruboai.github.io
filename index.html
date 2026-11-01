@@ -130,6 +130,8 @@ footer .motto{font-family:var(--display);font-weight:700;letter-spacing:.12em;co
 .sns-links{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:20px}
 footer .flinks a{color:var(--ink-soft);text-decoration:none;font-weight:500}
 footer .flinks a:hover{color:var(--blue)}
+.g-badge{font-family:var(--display);font-weight:800;font-size:1.15rem;letter-spacing:.01em}
+.mailbox a{text-decoration:none}
 </style>
 </head>
 <body>
@@ -536,27 +538,17 @@ footer .flinks a:hover{color:var(--blue)}
   </section>
 
   <section class="band white" id="contact">
-    <div class="wrap">
-      <h2>お問い合わせ・ご質問</h2>
-      <p class="lead">困っていることがあれば、メールで気軽に聞いてください。お返事は、届いた順にゆっくりになることもあります。</p>
-      <div class="contact">
-        <div class="mailbox">
-          <div class="label">MAIL</div>
-          <div class="mailrow">
-            <code id="mail">umepyon@nuruboai.com</code>
-            <button class="copy" id="copyBtn" type="button">コピー</button>
-          </div>
-          <p class="note" style="margin:10px 0 0">メールソフトにこのアドレスを貼り付けて送ってください。</p>
+    <div class="wrap" style="text-align:center">
+      <h2>お問い合わせ</h2>
+      <p class="lead" style="margin-inline:auto">チャンネルやシェアハウスへのご連絡・ご感想はこちらからどうぞ。</p>
+      <div class="mailbox" style="max-width:680px;margin:0 auto">
+        <div class="label">GOOGLE アカウント / GMAIL</div>
+        <div class="mailrow" style="justify-content:center">
+          <span class="g-badge" aria-hidden="true"><span style="color:#4285F4">G</span><span style="color:#EA4335">o</span><span style="color:#FBBC05">o</span><span style="color:#4285F4">g</span><span style="color:#34A853">l</span><span style="color:#EA4335">e</span></span>
+          <a href="mailto:nurubo.ai.house@gmail.com"><code id="mail">nurubo.ai.house@gmail.com</code></a>
+          <button class="copy" id="copyBtn" type="button">コピー</button>
         </div>
-        <div>
-          <h3 style="font-family:var(--display);font-size:1.05rem;margin:0 0 6px">メールに書いてもらえると助かること</h3>
-          <ul class="checklist">
-            <li>使っている機器の名前（例：プリンターの機種名）</li>
-            <li>パソコンが Windows か Mac か</li>
-            <li>何をしようとして、どうなったか</li>
-            <li>エラーが出ていれば、その画面の写真</li>
-          </ul>
-        </div>
+        <p class="note" style="margin:10px 0 0">アドレスをクリックするとメールソフトが開きます。コピーボタンでも控えられます。</p>
       </div>
     </div>
   </section>
