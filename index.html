@@ -46,6 +46,13 @@ nav a:hover{background:var(--mist);color:var(--ink)}
 /* hero */
 .hero .wrap{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:40px;align-items:center;padding-block:40px 56px}
 .hero img{width:100%;height:auto;display:block}
+/* Coordinates follow the 1200 × 670 wordmark: only the sloth inside the last o is replaced. */
+.hero-logo{position:relative;min-width:0}
+.hero-logo .logo-o{position:absolute;left:85%;top:36.865672%;width:10%;height:auto;aspect-ratio:1;display:block;background:#fff;visibility:hidden;pointer-events:none}
+.hero-logo .logo-o.is-playing{visibility:visible}
+.logo-motion{position:absolute;right:0;bottom:0;border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:var(--paper);color:var(--ink-soft);font:inherit;font-size:.72rem;cursor:pointer}
+.logo-motion[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){.hero-logo .logo-o{display:none}}
 .hero h1{font-family:var(--display);font-weight:800;font-size:clamp(1.9rem,4vw,2.6rem);line-height:1.35;margin:0 0 16px;text-wrap:balance}
 .hero h1 .accent{background:linear-gradient(90deg,var(--blue),var(--leaf));-webkit-background-clip:text;background-clip:text;color:transparent}
 .hero p{margin:0 0 12px;color:var(--ink-soft)}
@@ -200,7 +207,11 @@ footer .flinks a:hover{color:var(--blue)}
 <main id="top">
   <section class="hero">
     <div class="wrap">
-      <img src="images/nurubo-logo.jpg" alt="nurubo — AI &amp; Automation Co. Smart &amp; Relaxed。ノートパソコンを操作するナマケモノのロゴ" width="1200" height="670">
+      <div class="hero-logo">
+        <img src="images/nurubo-logo.jpg" alt="nurubo — AI &amp; Automation Co. Smart &amp; Relaxed。ノートパソコンを操作するナマケモノのロゴ" width="1200" height="670">
+        <video class="logo-o" data-src="videos/nurubo-o.mp4" width="320" height="320" muted playsinline preload="none" aria-hidden="true" tabindex="-1"></video>
+        <button class="logo-motion" type="button" hidden>ロゴを動かす</button>
+      </div>
       <div>
         <div class="tag">SMART &amp; RELAXED</div>
         <h1>ヌルボ、<br><span class="accent">はじめました。</span></h1>
@@ -626,5 +637,58 @@ footer .flinks a:hover{color:var(--blue)}
   </div>
 </footer>
 
+<script>
+(() => {
+  const video = document.querySelector('.logo-o');
+  const button = document.querySelector('.logo-motion');
+  const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let userPaused = false;
+  let failed = false;
+  let finished = false;
+
+  const updateLabel = () => {
+    button.textContent = video.paused ? 'ロゴを動かす' : 'ロゴの動きを止める';
+  };
+  const syncPlayback = () => {
+    if (failed || finished || video.ended) return;
+    if (motion.matches) {
+      video.pause();
+      video.classList.remove('is-playing');
+      button.hidden = true;
+      return;
+    }
+    if (!video.getAttribute('src')) video.src = video.dataset.src;
+    button.hidden = false;
+    if (document.hidden || userPaused) {
+      video.pause();
+    } else {
+      video.muted = true;
+      video.play().catch(updateLabel);
+    }
+  };
+  video.addEventListener('playing', () => {
+    if (!motion.matches) video.classList.add('is-playing');
+    updateLabel();
+  });
+  video.addEventListener('pause', updateLabel);
+  video.addEventListener('ended', () => {
+    // Keep the last frame and never restart until the page is opened again.
+    finished = true;
+    button.hidden = true;
+  });
+  video.addEventListener('error', () => {
+    failed = true;
+    video.classList.remove('is-playing');
+    button.hidden = true;
+  });
+  button.addEventListener('click', () => {
+    userPaused = !video.paused;
+    syncPlayback();
+  });
+  motion.addEventListener('change', syncPlayback);
+  document.addEventListener('visibilitychange', syncPlayback);
+  syncPlayback();
+})();
+</script>
 </body>
 </html>
