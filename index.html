@@ -37,8 +37,8 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--paper)}
 header.site{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:color-mix(in srgb,var(--paper) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
 header.site .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:10px}
-.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);font-family:var(--display);font-weight:800;font-size:1.35rem;letter-spacing:.01em}
-.brand img{width:36px;height:36px}
+.brand{display:flex;align-items:center;text-decoration:none}
+.brand img{height:36px;width:auto;display:block}
 nav ul{display:flex;gap:4px;list-style:none;margin:0;padding:0;flex-wrap:wrap}
 nav a{display:block;padding:6px 12px;border-radius:999px;text-decoration:none;color:var(--ink-soft);font-weight:500;font-size:.92rem}
 nav a:hover{background:var(--mist);color:var(--ink)}
@@ -46,13 +46,7 @@ nav a:hover{background:var(--mist);color:var(--ink)}
 /* hero */
 .hero .wrap{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:40px;align-items:center;padding-block:40px 56px}
 .hero img{width:100%;height:auto;display:block}
-/* Coordinates follow the 1200 × 670 wordmark: only the sloth inside the last o is replaced. */
-.hero-logo{position:relative;min-width:0}
-.hero-logo .logo-o{position:absolute;left:85%;top:36.865672%;width:10%;height:auto;aspect-ratio:1;display:block;background:#fff;opacity:0;pointer-events:none}
-.hero-logo .logo-o.is-playing{opacity:1}
-.logo-motion{position:absolute;right:0;bottom:0;border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:var(--paper);color:var(--ink-soft);font:inherit;font-size:.78rem;min-height:44px;cursor:pointer}
-.logo-motion[hidden]{display:none}
-@media (prefers-reduced-motion:reduce){.hero-logo .logo-o:not(.motion-requested){display:none}}
+.hero-logo{min-width:0}
 .hero h1{font-family:var(--display);font-weight:800;font-size:clamp(1.9rem,4vw,2.6rem);line-height:1.35;margin:0 0 16px;text-wrap:balance}
 .hero h1 .accent{background:linear-gradient(90deg,var(--blue),var(--leaf));-webkit-background-clip:text;background-clip:text;color:transparent}
 .hero p{margin:0 0 12px;color:var(--ink-soft)}
@@ -176,7 +170,7 @@ footer .motto{font-family:var(--display);font-weight:700;letter-spacing:.12em;co
 }
 @media (max-width:440px){
   .topics{grid-template-columns:1fr}
-  .brand span{display:none}
+  .brand img{height:30px}
 }
 
 /* movie & sns (added 2026-11-01) */
@@ -222,7 +216,7 @@ footer .flinks a:hover{color:var(--blue)}
 
 <header class="site">
   <div class="wrap">
-    <a class="brand" href="#top"><img src="images/nurubo-mark.png" alt=""><span>nurubo</span></a>
+    <a class="brand" href="#top"><img src="images/nurubo-wordmark.png" alt="nurubo" width="740" height="182"></a>
     <nav aria-label="ページ内メニュー">
       <ul>
         <li><a href="#help">できること</a></li>
@@ -240,8 +234,6 @@ footer .flinks a:hover{color:var(--blue)}
     <div class="wrap">
       <div class="hero-logo">
         <img src="images/nurubo-logo.jpg" alt="nurubo — AI &amp; Automation Co. Smart &amp; Relaxed。ノートパソコンを操作するナマケモノのロゴ" width="1200" height="670">
-        <video class="logo-o" data-src="videos/nurubo-o.mp4" width="320" height="320" muted playsinline webkit-playsinline preload="metadata" aria-hidden="true" tabindex="-1"></video>
-        <button class="logo-motion" type="button" hidden>ロゴを動かす</button>
       </div>
       <div>
         <div class="tag">SMART &amp; RELAXED</div>
@@ -668,76 +660,5 @@ footer .flinks a:hover{color:var(--blue)}
   </div>
 </footer>
 
-<script>
-(() => {
-  const video = document.querySelector('.logo-o');
-  const button = document.querySelector('.logo-motion');
-  const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
-  let userPaused = false;
-  let failed = false;
-  let finished = false;
-  let motionRequested = false;
-
-  // Set Safari playback properties before assigning the media URL.
-  video.defaultMuted = true;
-  video.muted = true;
-  video.playsInline = true;
-
-  const updateLabel = () => {
-    button.textContent = video.paused ? 'ロゴを動かす' : 'ロゴの動きを止める';
-  };
-  const syncPlayback = () => {
-    if (failed || finished || video.ended) return;
-    button.hidden = false;
-    if (motion.matches && !motionRequested) {
-      video.pause();
-      video.classList.remove('is-playing');
-      return;
-    }
-    if (!video.getAttribute('src')) {
-      video.src = video.dataset.src;
-      video.load();
-    }
-    if (document.hidden || userPaused) {
-      video.pause();
-    } else {
-      video.muted = true;
-      video.play().catch(updateLabel);
-    }
-  };
-  video.addEventListener('playing', () => {
-    if (!motion.matches || motionRequested) video.classList.add('is-playing');
-    updateLabel();
-  });
-  video.addEventListener('pause', updateLabel);
-  video.addEventListener('ended', () => {
-    // Keep the last frame and never restart until the page is opened again.
-    finished = true;
-    button.hidden = true;
-  });
-  video.addEventListener('error', () => {
-    failed = true;
-    video.classList.remove('is-playing');
-    button.hidden = true;
-  });
-  button.addEventListener('click', () => {
-    if (failed || finished || video.ended) return;
-    userPaused = !video.paused;
-    if (!userPaused) {
-      motionRequested = true;
-      video.classList.add('motion-requested');
-    }
-    // Keep play() in the tap handler when Safari requires a user gesture.
-    syncPlayback();
-  });
-  motion.addEventListener('change', () => {
-    motionRequested = false;
-    video.classList.remove('motion-requested');
-    syncPlayback();
-  });
-  document.addEventListener('visibilitychange', syncPlayback);
-  syncPlayback();
-})();
-</script>
 </body>
 </html>
