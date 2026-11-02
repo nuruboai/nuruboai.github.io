@@ -38,7 +38,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 header.site{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:color-mix(in srgb,var(--paper) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
 header.site .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:10px}
 .brand{display:flex;align-items:center;text-decoration:none}
-.brand img{height:56px;width:auto;display:block}
+.brand img{height:36px;width:auto;display:block}
 nav ul{display:flex;gap:4px;list-style:none;margin:0;padding:0;flex-wrap:wrap}
 nav a{display:block;padding:6px 12px;border-radius:999px;text-decoration:none;color:var(--ink-soft);font-weight:500;font-size:.92rem}
 nav a:hover{background:var(--mist);color:var(--ink)}
@@ -170,7 +170,7 @@ footer .motto{font-family:var(--display);font-weight:700;letter-spacing:.12em;co
 }
 @media (max-width:440px){
   .topics{grid-template-columns:1fr}
-  .brand img{height:36px}
+  .brand img{height:30px}
 }
 
 /* movie & sns (added 2026-11-01) */
@@ -216,7 +216,7 @@ footer .flinks a:hover{color:var(--blue)}
 
 <header class="site">
   <div class="wrap">
-    <a class="brand" href="#top"><img src="images/nurubo-wordmark.png" alt="nurubo" width="740" height="182"></a>
+    <a class="brand" href="#top"><img src="images/nurubo-wordmark.png" alt="nurubo" width="780" height="182"></a>
     <nav aria-label="ページ内メニュー">
       <ul>
         <li><a href="#help">できること</a></li>
