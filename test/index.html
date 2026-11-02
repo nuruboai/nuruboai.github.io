@@ -212,7 +212,7 @@ footer .flinks a:hover{color:var(--blue)}
     <div class="wrap">
       <div class="hero-logo">
         <img src="../images/nurubo-logo.jpg" alt="nurubo — AI &amp; Automation Co. Smart &amp; Relaxed。ノートパソコンを操作するナマケモノのロゴ" width="1200" height="670">
-        <video class="logo-o" data-src="../videos/nurubo-o.mp4" width="320" height="320" muted loop playsinline preload="none" aria-hidden="true" tabindex="-1"></video>
+        <video class="logo-o" data-src="../videos/nurubo-o.mp4" width="320" height="320" muted playsinline preload="none" aria-hidden="true" tabindex="-1"></video>
         <button class="logo-motion" type="button" hidden>ロゴを動かす</button>
       </div>
       <div>
@@ -647,12 +647,13 @@ footer .flinks a:hover{color:var(--blue)}
   const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
   let userPaused = false;
   let failed = false;
+  let finished = false;
 
   const updateLabel = () => {
     button.textContent = video.paused ? 'ロゴを動かす' : 'ロゴの動きを止める';
   };
   const syncPlayback = () => {
-    if (failed) return;
+    if (failed || finished || video.ended) return;
     if (motion.matches) {
       video.pause();
       video.classList.remove('is-playing');
@@ -673,6 +674,11 @@ footer .flinks a:hover{color:var(--blue)}
     updateLabel();
   });
   video.addEventListener('pause', updateLabel);
+  video.addEventListener('ended', () => {
+    // Keep the last frame and never restart until the page is opened again.
+    finished = true;
+    button.hidden = true;
+  });
   video.addEventListener('error', () => {
     failed = true;
     video.classList.remove('is-playing');
