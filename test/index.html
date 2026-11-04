@@ -40,6 +40,15 @@ header.site{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;backgroun
 header.site .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:10px}
 .brand{display:flex;align-items:center;text-decoration:none}
 .brand img{height:36px;width:auto;display:block}
+.audience-tabs{display:flex;gap:4px;padding:4px;border:1px solid var(--line);border-radius:14px;background:var(--mist)}
+.audience-tab{min-height:44px;border:0;border-radius:10px;padding:10px 26px;background:transparent;color:var(--ink-soft);font-family:var(--display);font-weight:700;font-size:1rem;line-height:1.5;cursor:pointer}
+.audience-tab:hover{color:var(--blue)}
+.audience-tab[aria-selected="true"]{background:var(--blue);color:#fff}
+.audience-panel[hidden]{display:none}
+.audience-panel:focus-visible{outline:3px solid var(--leaf);outline-offset:-3px}
+.audience-panel section[id]{scroll-margin-top:88px}
+.personal-menu{border-bottom:1px solid var(--line);background:var(--paper)}
+.personal-menu .wrap{padding-block:8px}
 nav ul{display:flex;gap:4px;list-style:none;margin:0;padding:0;flex-wrap:wrap}
 nav a{display:block;padding:6px 12px;border-radius:999px;text-decoration:none;color:var(--ink-soft);font-weight:500;font-size:.92rem}
 nav a:hover{background:var(--mist);color:var(--ink)}
@@ -166,7 +175,6 @@ footer .motto{font-family:var(--display);font-weight:700;letter-spacing:.12em;co
 }
 @media (max-width:720px){
   header.site .wrap{flex-wrap:wrap;gap:8px 16px}
-  header.site nav{width:100%}
   .hero .wrap{grid-template-columns:1fr;gap:20px;padding-block:24px 40px}
   nav a{padding:6px 8px;font-size:.85rem}
   .faq .a{padding-left:18px}
@@ -176,20 +184,30 @@ footer .motto{font-family:var(--display);font-weight:700;letter-spacing:.12em;co
   .topics{grid-template-columns:1fr}
   .brand img{height:30px}
 }
+@media (max-width:540px){
+  header.site .wrap{justify-content:center;gap:10px}
+  .audience-tabs{width:100%}
+  .audience-tab{flex:1;padding:8px 12px}
+  .personal-menu ul{justify-content:center}
+  .audience-panel section[id]{scroll-margin-top:150px}
+}
 
 /* movie & sns (added 2026-11-01) */
 .movie-frame{max-width:820px;margin:26px auto 0;aspect-ratio:16/9;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:#000}
 .movie-frame iframe{width:100%;height:100%;border:0;display:block}
 /* business introduction */
-#business{scroll-margin-top:96px}
+.business-heading{max-width:820px;margin:0 auto 28px}
+.business-heading .tag{margin:0 0 10px;font-family:var(--display);font-weight:700;font-size:.8rem;letter-spacing:.14em;color:var(--leaf)}
+.business-heading h1{font-family:var(--display);font-weight:800;font-size:clamp(1.9rem,4vw,2.6rem);line-height:1.4;margin:0 0 16px;text-wrap:balance}
+.business-heading .lead{margin:0}
 .business-video{max-width:820px;margin:0 auto;padding:24px;background:var(--paper);border:1px solid var(--line);border-radius:18px}
-.business-video h3{font-family:var(--display);font-size:clamp(1.1rem,3vw,1.4rem);margin:0 0 8px;text-wrap:balance}
+.business-video h2{font-family:var(--display);font-size:clamp(1.1rem,3vw,1.4rem);margin:0 0 8px;text-wrap:balance}
 .business-video p{margin:0;color:var(--ink-soft)}
 .business-video .movie-frame{margin-top:20px}
 .business-video video{width:100%;height:100%;display:block;object-fit:contain}
 .business-video .note{margin-top:16px}
 @media (max-width:720px){
-  #business{scroll-margin-top:160px}
+  #business .wrap{padding-block:32px}
   .business-video{padding:18px}
 }
 .sns-links{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:20px}
@@ -234,20 +252,26 @@ footer .flinks a:hover{color:var(--blue)}
 <header class="site">
   <div class="wrap">
     <a class="brand" href="#top"><img src="../images/nurubo-wordmark.png" alt="nurubo" width="780" height="182"></a>
-    <nav aria-label="ページ内メニュー">
+    <div class="audience-tabs" role="tablist" aria-label="ご利用の目的">
+      <button class="audience-tab" type="button" role="tab" id="personal-tab" aria-controls="personal-panel" aria-selected="true" tabindex="0">個人向け</button>
+      <button class="audience-tab" type="button" role="tab" id="business-tab" aria-controls="business-panel" aria-selected="false" tabindex="-1">企業向け</button>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+  <div class="audience-panel" role="tabpanel" id="personal-panel" aria-labelledby="personal-tab" tabindex="0">
+    <nav class="personal-menu" aria-label="個人向けページ内メニュー">
+      <div class="wrap">
       <ul>
         <li><a href="#help">できること</a></li>
-        <li><a href="#business">企業向け</a></li>
         <li><a href="#movie">動画</a></li>
         <li><a href="#faq">よくある質問</a></li>
         <li><a href="#safety">安全のために</a></li>
         <li><a href="#contact">お問い合わせ</a></li>
       </ul>
+      </div>
     </nav>
-  </div>
-</header>
-
-<main id="top">
   <section class="hero">
     <div class="wrap">
       <div class="hero-logo">
@@ -263,27 +287,6 @@ footer .flinks a:hover{color:var(--blue)}
           <a class="btn ghost" href="#contact">質問してみる</a>
         </div>
       </div>
-    </div>
-  </section>
-
-  <section class="band" id="business" aria-labelledby="business-title">
-    <div class="wrap">
-      <h2 id="business-title">企業向け</h2>
-      <p class="lead">日々の業務に、AIと小さな自動化を。企業向けの活用例を動画でご紹介します。</p>
-      <article class="business-video" aria-labelledby="business-video-title">
-        <h3 id="business-video-title">完璧な承認ワークフローの設計</h3>
-        <p>社内の申請・承認の流れを見直すきっかけに、まずは動画をご覧ください。</p>
-        <div class="movie-frame">
-          <video controls playsinline preload="metadata" poster="../images/approval-workflow-poster.jpg" width="1280" height="720" aria-labelledby="business-video-title">
-            <source src="../videos/approval-workflow.mp4" type="video/mp4">
-            <p>動画を再生できない場合は、<a href="../videos/approval-workflow.mp4">動画ファイルを開く</a>からご覧ください。</p>
-          </video>
-        </div>
-        <p class="note">約6分の動画です。再生ボタンを押すと音声が流れます。<a href="../videos/approval-workflow.mp4" target="_blank" rel="noopener">動画だけを開く（新しいタブ）</a>こともできます。</p>
-        <div class="btns">
-          <a class="btn primary" href="https://docs.google.com/forms/d/e/1FAIpQLSd-zVjsPrBVhOcm5djZEeRa6GIBf7vZwYw51ql5xSlpS5UIJg/viewform" target="_blank" rel="noopener">業務のご相談・お問い合わせ</a>
-        </div>
-      </article>
     </div>
   </section>
 
@@ -689,6 +692,34 @@ footer .flinks a:hover{color:var(--blue)}
       </div>
     </div>
   </section>
+  </div>
+
+  <div class="audience-panel" role="tabpanel" id="business-panel" aria-labelledby="business-tab" tabindex="0" hidden>
+    <section class="band" id="business" aria-labelledby="business-title">
+      <div class="wrap">
+        <div class="business-heading">
+          <p class="tag">FOR BUSINESS</p>
+          <h1 id="business-title">いつもの業務に、<br>小さな自動化を。</h1>
+          <p class="lead">AIと小さな自動化で、日々の仕事を「ゆるく、かしこく」。企業向けの活用例を動画でご紹介します。</p>
+        </div>
+        <article class="business-video" aria-labelledby="business-video-title">
+          <h2 id="business-video-title">完璧な承認ワークフローの設計</h2>
+          <p>社内の申請・承認の流れを見直すきっかけに、まずは動画をご覧ください。</p>
+          <div class="movie-frame">
+            <video controls playsinline preload="metadata" poster="../images/approval-workflow-poster.jpg" width="1280" height="720" aria-labelledby="business-video-title">
+              <source src="../videos/approval-workflow.mp4" type="video/mp4">
+              <p>動画を再生できない場合は、<a href="../videos/approval-workflow.mp4">動画ファイルを開く</a>からご覧ください。</p>
+            </video>
+          </div>
+          <p class="note">約6分の動画です。再生ボタンを押すと音声が流れます。<a href="../videos/approval-workflow.mp4" target="_blank" rel="noopener">動画だけを開く（新しいタブ）</a>こともできます。</p>
+          <div class="btns">
+            <a class="btn primary" href="https://docs.google.com/forms/d/e/1FAIpQLSd-zVjsPrBVhOcm5djZEeRa6GIBf7vZwYw51ql5xSlpS5UIJg/viewform" target="_blank" rel="noopener">業務のご相談・お問い合わせ</a>
+          </div>
+          <p class="note">お問い合わせは、Google アカウントでログインして送れるフォームで受け付けています。</p>
+        </article>
+      </div>
+    </section>
+  </div>
 </main>
 
 <footer>
@@ -698,6 +729,68 @@ footer .flinks a:hover{color:var(--blue)}
     <span class="motto">SMART &amp; RELAXED</span>
   </div>
 </footer>
+
+<script>
+(() => {
+  const tabList = document.querySelector('.audience-tabs');
+  const tabs = Array.from(tabList.querySelectorAll('[role="tab"]'));
+  const selectedFromHash = () => location.hash === '#business' ? 1 : 0;
+
+  function selectTab(index, { updateHistory = false, focus = false, scroll = false } = {}) {
+    tabs.forEach((tab, i) => {
+      const selected = i === index;
+      const panel = document.getElementById(tab.getAttribute('aria-controls'));
+      if (!selected) {
+        panel.querySelectorAll('video, audio').forEach(media => media.pause());
+        panel.querySelectorAll('iframe[src]').forEach(frame => {
+          // Replace the player so stopping it adds no iframe navigation to Back history.
+          const placeholder = frame.cloneNode(false);
+          placeholder.dataset.tabSrc = frame.getAttribute('src');
+          placeholder.removeAttribute('src');
+          frame.replaceWith(placeholder);
+        });
+      }
+      panel.hidden = !selected;
+      if (selected) {
+        panel.querySelectorAll('iframe[data-tab-src]').forEach(frame => {
+          const player = frame.cloneNode(false);
+          player.setAttribute('src', frame.dataset.tabSrc);
+          delete player.dataset.tabSrc;
+          frame.replaceWith(player);
+        });
+      }
+      tab.setAttribute('aria-selected', String(selected));
+      tab.tabIndex = selected ? 0 : -1;
+    });
+    if (updateHistory) {
+      const hash = index === 1 ? '#business' : '#personal';
+      if (location.hash !== hash) history.pushState(null, '', hash);
+    }
+    if (focus) tabs[index].focus({ preventScroll: true });
+    if (scroll) window.scrollTo({ top: 0, behavior: 'instant' });
+  }
+
+  tabs.forEach((tab, index) => {
+    tab.addEventListener('click', () => selectTab(index, { updateHistory: true, scroll: true }));
+  });
+  tabList.addEventListener('keydown', event => {
+    const index = tabs.indexOf(event.target);
+    if (index < 0) return;
+    let next;
+    switch (event.key) {
+      case 'ArrowRight': next = (index + 1) % tabs.length; break;
+      case 'ArrowLeft': next = (index - 1 + tabs.length) % tabs.length; break;
+      case 'Home': next = 0; break;
+      case 'End': next = tabs.length - 1; break;
+      default: return;
+    }
+    event.preventDefault();
+    selectTab(next, { updateHistory: true, focus: true, scroll: true });
+  });
+  window.addEventListener('hashchange', () => selectTab(selectedFromHash()));
+  selectTab(selectedFromHash());
+})();
+</script>
 
 </body>
 </html>
