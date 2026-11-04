@@ -44,9 +44,11 @@ header.site .wrap{display:flex;align-items:center;justify-content:space-between;
 .audience-tab{min-height:44px;border:0;border-radius:10px;padding:10px 26px;background:transparent;color:var(--ink-soft);font-family:var(--display);font-weight:700;font-size:1rem;line-height:1.5;cursor:pointer}
 .audience-tab:hover{color:var(--blue)}
 .audience-tab[aria-selected="true"]{background:var(--blue);color:#fff}
+.shared-contact-link{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px 14px;border:1px solid var(--line);border-radius:999px;text-decoration:none;color:var(--blue);font-size:.9rem;font-weight:700;white-space:nowrap}
+.shared-contact-link:hover{background:var(--mist)}
 .audience-panel[hidden]{display:none}
 .audience-panel:focus-visible{outline:3px solid var(--leaf);outline-offset:-3px}
-.audience-panel section[id]{scroll-margin-top:88px}
+.audience-panel section[id],#contact{scroll-margin-top:88px}
 .personal-menu{border-bottom:1px solid var(--line);background:var(--paper)}
 .personal-menu .wrap{padding-block:8px}
 nav ul{display:flex;gap:4px;list-style:none;margin:0;padding:0;flex-wrap:wrap}
@@ -184,12 +186,14 @@ footer .motto{font-family:var(--display);font-weight:700;letter-spacing:.12em;co
   .topics{grid-template-columns:1fr}
   .brand img{height:30px}
 }
-@media (max-width:540px){
+@media (max-width:720px){
   header.site .wrap{justify-content:center;gap:10px}
-  .audience-tabs{width:100%}
+  .brand{margin-right:auto}
+  .shared-contact-link{order:1;padding:6px 10px;font-size:.85rem}
+  .audience-tabs{order:2;width:100%}
   .audience-tab{flex:1;padding:8px 12px}
   .personal-menu ul{justify-content:center}
-  .audience-panel section[id]{scroll-margin-top:150px}
+  .audience-panel section[id],#contact{scroll-margin-top:150px}
 }
 
 /* movie & sns (added 2026-11-01) */
@@ -277,6 +281,7 @@ footer .flinks a:hover{color:var(--blue)}
       <button class="audience-tab" type="button" role="tab" id="personal-tab" aria-controls="personal-panel" aria-selected="true" tabindex="0">個人向け</button>
       <button class="audience-tab" type="button" role="tab" id="business-tab" aria-controls="business-panel" aria-selected="false" tabindex="-1">企業向け</button>
     </div>
+    <a class="shared-contact-link" href="#contact">お問い合わせ</a>
   </div>
 </header>
 
@@ -680,39 +685,6 @@ footer .flinks a:hover{color:var(--blue)}
     </div>
   </section>
 
-  <!-- 【お問い合わせセクション：Googleフォーム連携（ルール第6章・第9章に準拠）】 -->
-  <section class="band white" id="contact">
-    <div class="wrap">
-      <h2>お問い合わせ・ご質問</h2>
-      <p class="lead">困っていることがあれば、お気軽にご連絡ください。お返事は、届いた順にゆっくりになることもあります。</p>
-      
-      <div class="contact-wrap">
-        <div class="google-auth-card">
-          <h3>Google アカウントでログインして送れます</h3>
-          <p>
-            いたずら・迷惑メール防止のため、お問い合わせは Google フォームで受け付けています。下のボタンを押すと Google のログイン画面が出ますので、ログインしてからご記入ください。お返事は、ログインした Google アカウントのメールアドレスにお送りします。
-          </p>
-
-          <a class="form-btn" href="https://docs.google.com/forms/d/e/1FAIpQLSd-zVjsPrBVhOcm5djZEeRa6GIBf7vZwYw51ql5xSlpS5UIJg/viewform" target="_blank" rel="noopener">
-            <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
-            Google でログインして問い合わせる
-          </a>
-
-          <p class="form-note">※ 新しいタブで Google フォームが開きます。Google アカウントをお持ちでない方は、無料で作成できます。</p>
-        </div>
-
-        <div class="checklist-card">
-          <h4>フォームに書いてもらえると助かること</h4>
-          <ul class="checklist">
-            <li>使っている機器の名前（例：プリンターの機種名）</li>
-            <li>パソコンが Windows か Mac か</li>
-            <li>何をしようとして、どうなったか</li>
-            <li>エラーが出ていれば、その画面の写真</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </section>
   </div>
 
   <div class="audience-panel" role="tabpanel" id="business-panel" aria-labelledby="business-tab" tabindex="0" hidden>
@@ -733,7 +705,7 @@ footer .flinks a:hover{color:var(--blue)}
           </div>
           <p class="note">約6分の動画です。再生ボタンを押すと音声が流れます。<a href="../videos/approval-workflow.mp4" target="_blank" rel="noopener">動画だけを開く（新しいタブ）</a>こともできます。</p>
           <div class="btns">
-            <a class="btn primary" href="https://docs.google.com/forms/d/e/1FAIpQLSd-zVjsPrBVhOcm5djZEeRa6GIBf7vZwYw51ql5xSlpS5UIJg/viewform" target="_blank" rel="noopener">業務のご相談・お問い合わせ</a>
+            <a class="btn primary" href="#contact">業務のご相談・お問い合わせ</a>
           </div>
           <p class="note">お問い合わせは、Google アカウントでログインして送れるフォームで受け付けています。</p>
         </article>
@@ -777,6 +749,40 @@ footer .flinks a:hover{color:var(--blue)}
       </div>
     </section>
   </div>
+
+  <!-- 【お問い合わせセクション：Googleフォーム連携（ルール第6章・第9章に準拠）】 -->
+  <section class="band white" id="contact">
+    <div class="wrap">
+      <h2>お問い合わせ・ご質問</h2>
+      <p class="lead">困っていることがあれば、お気軽にご連絡ください。お返事は、届いた順にゆっくりになることもあります。</p>
+      
+      <div class="contact-wrap">
+        <div class="google-auth-card">
+          <h3>Google アカウントでログインして送れます</h3>
+          <p>
+            いたずら・迷惑メール防止のため、お問い合わせは Google フォームで受け付けています。下のボタンを押すと Google のログイン画面が出ますので、ログインしてからご記入ください。お返事は、ログインした Google アカウントのメールアドレスにお送りします。
+          </p>
+
+          <a class="form-btn" href="https://docs.google.com/forms/d/e/1FAIpQLSd-zVjsPrBVhOcm5djZEeRa6GIBf7vZwYw51ql5xSlpS5UIJg/viewform" target="_blank" rel="noopener">
+            <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
+            Google でログインして問い合わせる
+          </a>
+
+          <p class="form-note">※ 新しいタブで Google フォームが開きます。Google アカウントをお持ちでない方は、無料で作成できます。</p>
+        </div>
+
+        <div class="checklist-card">
+          <h4>フォームに書いてもらえると助かること</h4>
+          <ul class="checklist">
+            <li>使っている機器の名前（例：プリンターの機種名）</li>
+            <li>パソコンが Windows か Mac か</li>
+            <li>何をしようとして、どうなったか</li>
+            <li>エラーが出ていれば、その画面の写真</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
 </main>
 
 <footer>
@@ -844,7 +850,10 @@ footer .flinks a:hover{color:var(--blue)}
     event.preventDefault();
     selectTab(next, { updateHistory: true, focus: true, scroll: true });
   });
-  window.addEventListener('hashchange', () => selectTab(selectedFromHash()));
+  window.addEventListener('hashchange', () => {
+    // The shared contact section belongs to both audiences; keep the current tab.
+    if (location.hash !== '#contact') selectTab(selectedFromHash());
+  });
   // Every fresh page load starts with the personal screen, including old business links.
   selectTab(0);
   if (location.hash === '#business') history.replaceState(null, '', '#personal');
