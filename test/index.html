@@ -238,6 +238,17 @@ footer .motto{font-family:var(--display);font-weight:700;letter-spacing:.12em;co
 .sns-links{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:20px}
 footer .flinks a{color:var(--ink-soft);text-decoration:none;font-weight:500}
 footer .flinks a:hover{color:var(--blue)}
+/* Digital business card: shared by both audience tabs. */
+.digital-card-panel{display:grid;grid-template-columns:minmax(0,1fr) 190px;align-items:center;gap:32px;max-width:820px;margin:0 auto;padding:30px;border:1px solid var(--line);border-radius:22px;background:var(--paper)}
+.digital-card-panel .tag{margin:0 0 8px;color:var(--leaf);font-size:.8rem;font-weight:700;letter-spacing:.12em}
+.digital-card-panel h2{margin:0 0 12px}
+.digital-card-panel p{color:var(--ink-soft)}
+.digital-card-panel .btns{margin-top:20px}
+.digital-card-qr{margin:0;text-align:center}
+.digital-card-qr img{display:block;width:174px;height:auto;max-width:100%;margin:0 auto;image-rendering:pixelated}
+.digital-card-qr figcaption{margin-top:8px;color:var(--ink-soft);font-size:.8rem}
+.digital-card-panel .preview-note{margin:14px 0 0;font-size:.8rem}
+@media(max-width:600px){.digital-card-panel{grid-template-columns:1fr;padding:24px 20px;gap:24px}.digital-card-panel .btns .btn{width:100%;justify-content:center}}
 </style>
 <script type="application/ld+json">
 {
@@ -749,6 +760,24 @@ footer .flinks a:hover{color:var(--blue)}
       </div>
     </section>
   </div>
+
+  <section class="band" id="digital-card" aria-labelledby="digital-card-title">
+    <div class="wrap">
+      <div class="digital-card-panel">
+        <div>
+          <p class="tag">DIGITAL BUSINESS CARD</p>
+          <h2 id="digital-card-title">デジタル名刺</h2>
+          <p>nuruboの連絡先を、スマホに。<br>QRコードを読み取ると名刺ページが開きます。<br>必要な方は、連絡先を保存してお使いください。</p>
+          <div class="btns"><a class="btn primary" href="card/">名刺ページを開く</a></div>
+          <p class="preview-note">確認用：名刺は上のボタンから開けます。QRコードは本番公開後に使えます。</p>
+        </div>
+        <figure class="digital-card-qr">
+          <img src="card/qr-card.png" width="348" height="348" alt="nuruboのデジタル名刺を開くQRコード（本番公開後に利用できます）" loading="lazy">
+          <figcaption>スマホのカメラで読み取り</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
 
   <!-- 【お問い合わせセクション：Googleフォーム連携（ルール第6章・第9章に準拠）】 -->
   <section class="band white" id="contact">
