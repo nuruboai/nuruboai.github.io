@@ -29,6 +29,11 @@ a:focus-visible{outline:3px solid var(--green);outline-offset:4px}
 .save{display:flex;align-items:center;justify-content:center;gap:9px;margin:20px 0 0;padding:14px 10px;background:var(--blue);border-radius:12px;color:#fff;text-decoration:none;font-size:16px;font-weight:700;min-height:54px}
 .save svg{width:21px;height:21px;flex-shrink:0}
 .note{font-size:11px;line-height:1.8;color:var(--muted);text-align:center;margin:11px 0 0}
+.import-guide{margin-top:18px;padding:16px;background:#f0f7fc;border:1px solid #d8e8f4;border-radius:12px;text-align:left;font-size:13px;line-height:1.8}
+.import-guide h2{margin:0 0 8px;font-size:14px;line-height:1.6}
+.import-guide ol{margin:0;padding-left:1.6em}
+.import-guide li+li{margin-top:6px}
+.import-guide .close-note{margin:12px 0 0;padding-top:10px;border-top:1px solid #d8e8f4;color:var(--muted);font-size:12px}
 .links{margin-top:25px}
 .links h2{font-size:11px;letter-spacing:.12em;color:var(--muted);font-weight:500;margin:0 0 10px 4px}
 .links a{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-top:8px;color:var(--ink);text-decoration:none;font-size:13px;min-height:48px}
@@ -54,11 +59,19 @@ a:hover{filter:brightness(.95)}
       <div><dt>電話</dt><dd><a href="tel:07042848591">070-4284-8591</a></dd></div>
       <div><dt>Web</dt><dd><a href="https://nuruboai.com/">nuruboai.com</a></dd></div>
     </dl>
-    <a class="save" href="contact.vcf" download="nurubo-masahiro-umezawa.vcf" type="text/vcard">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M12 3v12m-4-4 4 4 4-4M5 15v5h14v-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      連絡先に追加
+    <a class="save" href="contact.vcf" download="nurubo-masahiro-umezawa.vcf" type="text/vcard" aria-describedby="import-summary iphone-import-guide">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="9" cy="7" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M19 7v6m-3-3h6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      連絡先を開いて登録
     </a>
-    <p class="note">名前・電話・メール・ホームページをまとめて保存。<br>開いた連絡先を確認して、スマホ側で登録してください。</p>
+    <p class="note" id="import-summary">登録名は「梅澤 雅弘」、会社名は「nurubo」です。<br>開いた画面で登録の操作をしてください。</p>
+    <section class="import-guide" id="iphone-import-guide" aria-labelledby="import-guide-title">
+      <h2 id="import-guide-title">iPhoneでは、開いたあとに2つの操作</h2>
+      <ol>
+        <li>名刺の下にある<strong>「新規連絡先を作成」</strong>を押す。</li>
+        <li>内容を確認して<strong>「完了」</strong>を押す。</li>
+      </ol>
+      <p class="close-note"><strong>上のチェック（✓）は、確認画面を閉じるだけです。</strong><br>登録するときは、下の「新規連絡先を作成」へ進んでください。</p>
+    </section>
   </article>
   <nav class="links" aria-label="nuruboの活動">
     <h2>nurubo の活動</h2>
