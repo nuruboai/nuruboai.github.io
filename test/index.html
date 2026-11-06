@@ -259,6 +259,7 @@ footer .flinks a:hover{color:var(--blue)}
 .digital-card-panel p{color:var(--ink-soft)}
 .digital-card-panel .btns{margin-top:20px}
 .digital-card-qr{margin:0;text-align:center}
+.digital-card-qr a{display:block;width:174px;max-width:100%;margin:0 auto}
 .digital-card-qr img{display:block;width:174px;height:auto;max-width:100%;margin:0 auto;image-rendering:pixelated}
 .digital-card-qr figcaption{margin-top:8px;color:var(--ink-soft);font-size:.8rem}
 .digital-card-panel .preview-note{margin:14px 0 0;font-size:.8rem}
@@ -800,11 +801,11 @@ footer .flinks a:hover{color:var(--blue)}
           <h2 id="digital-card-title">デジタル名刺</h2>
           <p>nuruboの連絡先を、スマホに。<br>QRコードを読み取ると名刺ページが開きます。<br>必要な方は、連絡先を保存してお使いください。</p>
           <div class="btns"><a class="btn primary" href="card/">名刺ページを開く</a></div>
-          <p class="preview-note">確認用：名刺は上のボタンから開けます。QRコードは本番公開後に使えます。</p>
+          <p class="preview-note">確認用：QRコードもボタンも、テスト用の名刺ページが開きます。</p>
         </div>
         <figure class="digital-card-qr">
-          <img src="card/qr-card.png" width="348" height="348" alt="nuruboのデジタル名刺を開くQRコード（本番公開後に利用できます）" loading="lazy">
-          <figcaption>スマホのカメラで読み取り</figcaption>
+          <a href="card/"><img src="card/qr-card-test.png" width="370" height="370" alt="テスト用のデジタル名刺を開く（QRコードの読み取りでも開けます）" loading="lazy"></a>
+          <figcaption>スマホのカメラで読み取り／タップでも開けます</figcaption>
         </figure>
       </div>
     </div>
