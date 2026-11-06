@@ -46,9 +46,10 @@ header.site .wrap{display:flex;align-items:center;justify-content:space-between;
 .audience-tab[aria-selected="true"]{background:var(--blue);color:#fff}
 .shared-contact-link{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px 14px;border:1px solid var(--line);border-radius:999px;text-decoration:none;color:var(--blue);font-size:.9rem;font-weight:700;white-space:nowrap}
 .shared-contact-link:hover{background:var(--mist)}
+.header-links{display:flex;align-items:center;gap:8px}
 .audience-panel[hidden]{display:none}
 .audience-panel:focus-visible{outline:3px solid var(--leaf);outline-offset:-3px}
-.audience-panel section[id],#contact{scroll-margin-top:88px}
+.audience-panel section[id],#contact,#digital-card{scroll-margin-top:88px}
 .personal-menu{border-bottom:1px solid var(--line);background:var(--paper)}
 .personal-menu .wrap{padding-block:8px}
 nav ul{display:flex;gap:4px;list-style:none;margin:0;padding:0;flex-wrap:wrap}
@@ -189,12 +190,15 @@ footer .motto{font-family:var(--display);font-weight:700;letter-spacing:.12em;co
 @media (max-width:720px){
   header.site .wrap{justify-content:center;gap:10px}
   .brand{margin-right:auto}
-  .shared-contact-link{order:1;padding:6px 10px;font-size:.85rem}
+  .header-links{order:1}
+  .shared-contact-link{padding:6px 10px;font-size:.85rem}
   .audience-tabs{order:2;width:100%}
   .audience-tab{flex:1;padding:8px 12px}
   .personal-menu ul{justify-content:center}
-  .audience-panel section[id],#contact{scroll-margin-top:150px}
+  .audience-panel section[id],#contact,#digital-card{scroll-margin-top:150px}
 }
+@media(max-width:440px){header.site .brand img{height:26px}}
+@media(max-width:360px){.audience-panel section[id],#contact,#digital-card{scroll-margin-top:210px}}
 
 /* movie & sns (added 2026-11-01) */
 .movie-frame{max-width:820px;margin:26px auto 0;aspect-ratio:16/9;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:#000}
@@ -292,7 +296,10 @@ footer .flinks a:hover{color:var(--blue)}
       <button class="audience-tab" type="button" role="tab" id="personal-tab" aria-controls="personal-panel" aria-selected="true" tabindex="0">個人向け</button>
       <button class="audience-tab" type="button" role="tab" id="business-tab" aria-controls="business-panel" aria-selected="false" tabindex="-1">企業向け</button>
     </div>
-    <a class="shared-contact-link" href="#contact">お問い合わせ</a>
+    <nav class="header-links" aria-label="共通ページ内メニュー">
+      <a class="shared-contact-link" href="#contact">お問い合わせ</a>
+      <a class="shared-contact-link" href="#digital-card">デジタル名刺</a>
+    </nav>
   </div>
 </header>
 
@@ -880,8 +887,8 @@ footer .flinks a:hover{color:var(--blue)}
     selectTab(next, { updateHistory: true, focus: true, scroll: true });
   });
   window.addEventListener('hashchange', () => {
-    // The shared contact section belongs to both audiences; keep the current tab.
-    if (location.hash !== '#contact') selectTab(selectedFromHash());
+    // Shared sections belong to both audiences; keep the current tab.
+    if (!['#contact', '#digital-card'].includes(location.hash)) selectTab(selectedFromHash());
   });
   // Every fresh page load starts with the personal screen, including old business links.
   selectTab(0);
