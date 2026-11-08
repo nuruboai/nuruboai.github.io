@@ -20,6 +20,8 @@
   button.dl{background:#33566e;font-size:13px;padding:9px 12px;}
   .qrbox{display:inline-block;text-align:center;margin:8px 14px 8px 0;vertical-align:top;}
   .qrbox p{font-size:12px;margin:4px 0;line-height:1.5;}
+  .qrbox{max-width:100%;}
+  .qrbox canvas{display:block;max-width:100%;height:auto;margin:0 auto;}
   iframe.preview{width:100%;max-width:340px;height:480px;border:1px solid #ddd;border-radius:12px;display:block;}
   .cols{display:flex;flex-wrap:wrap;gap:16px;}
   .err{color:#b00020;font-size:13px;white-space:pre-wrap;}
@@ -59,6 +61,7 @@
   <input type="url" id="f-pageurl" placeholder="例：https://example.com/card/">
   <label>ロゴ・写真（任意） <span class="small">― 名刺ページと、連絡先ファイル（.vcf）の写真に入ります。登録用QRには容量の都合で入りません</span></label>
   <input type="file" id="f-logo" accept="image/*">
+  <p class="err" id="logo-msg"></p>
   <div style="margin-top:16px;">
     <button id="btn-gen">生成する</button>
     <button class="sub" id="btn-sample">サンプルで試す</button>
@@ -2436,14 +2439,15 @@ function setGenBusy(busy){
 }
 document.getElementById('f-logo').addEventListener('change', function(e){
   var f = e.target.files[0]; logoData = null; photoB64 = null;
+  document.getElementById('logo-msg').textContent = '';
   if(!f){ logoLoading = false; setGenBusy(false); return; }
   logoLoading = true; setGenBusy(true);
   var done = function(data, photo){ logoData = data; photoB64 = photo || null; logoLoading = false; setGenBusy(false); };
   var r = new FileReader();
-  r.onerror = function(){ done(null); document.getElementById('err').textContent = 'ロゴ画像を読み込めませんでした。別の画像を選んでください。'; };
+  r.onerror = function(){ done(null); document.getElementById('logo-msg').textContent = 'このロゴ画像は読み込めませんでした（HEICなど）。このままだとロゴなしで作られます。JPEGかPNGを選び直してください。'; };
   r.onload = function(){
     var img = new Image();
-    img.onerror = function(){ done(null); document.getElementById('err').textContent = 'ロゴ画像を読み込めませんでした。別の画像を選んでください。'; };
+    img.onerror = function(){ done(null); document.getElementById('logo-msg').textContent = 'このロゴ画像は読み込めませんでした（HEICなど）。このままだとロゴなしで作られます。JPEGかPNGを選び直してください。'; };
     img.onload = function(){
       // 大きな写真をそのまま埋め込むとページが重くなるので、LOGO_MAX に縮めて入れる
       var sc = Math.min(1, LOGO_MAX / Math.max(img.width, img.height));
