@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>デジタル名刺ジェネレーター（試作v1.3）</title>
+<title>デジタル名刺ジェネレーター（試作v1.4）</title>
 <style>
   body{font-family:-apple-system,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;background:#f4f6f5;color:#222;margin:0;padding:16px;}
   .wrap{max-width:720px;margin:0 auto;}
@@ -31,7 +31,7 @@
 </head>
 <body>
 <div class="wrap">
-<h1>デジタル名刺ジェネレーター（試作v1.3）</h1>
+<h1>デジタル名刺ジェネレーター（試作v1.4）</h1>
 <p class="note">情報を入れると、名刺ページ・連絡先ファイル（vCard）・QRコードを作ります。<br>
 <b>入力した情報はこのページの中だけで処理され、どこにも送信されません。</b>このファイル1つで動きます。</p>
 
@@ -44,7 +44,13 @@
     <div style="flex:1;"><label>せい（よみ）</label><input type="text" id="f-family-kana" placeholder="例：やまだ"></div>
     <div style="flex:1;"><label>めい（よみ）</label><input type="text" id="f-given-kana" placeholder="例：たろう"></div>
   </div>
-  <p class="note" style="margin:4px 0 0;">姓と名を分けると、相手の電話帳で正しく並びます。よみがあると「や」の行で探せます。</p>
+  <label>名前の表示順</label>
+  <select id="f-order" style="width:100%;box-sizing:border-box;padding:10px;border:1px solid #ccc;border-radius:8px;font-size:15px;background:#fff;">
+    <option value="auto">自動（日本語なら 姓→名、ローマ字なら 名→姓）</option>
+    <option value="family-first">姓→名（例：山田 太郎／YAMADA Taro）</option>
+    <option value="given-first">名→姓（例：Taro Yamada）</option>
+  </select>
+  <p class="note" style="margin:4px 0 0;">姓と名を分けると、相手の電話帳で正しく並びます。よみがあると「や」の行で探せます。表示順は、名刺ページと連絡先の表示名に使います（電話帳の姓・名の欄は、順番にかかわらず正しく入ります）。</p>
   <label>会社・屋号（任意）</label>
   <input type="text" id="f-org" placeholder="例：サンプル商店">
   <label>肩書き（任意）</label>
@@ -2469,6 +2475,16 @@ document.getElementById('f-logo').addEventListener('change', function(e){
   };
   r.readAsDataURL(f);
 });
+// 表示順を決める。自動のときは、姓と名がどちらもローマ字（ASCII）だけなら 名→姓、それ以外は 姓→名
+function resolveOrder(choice, family, given){
+  if(choice === 'family-first' || choice === 'given-first') return choice;
+  var latin = /^[\x20-\x7E]*$/;
+  return (given && latin.test(family) && latin.test(given)) ? 'given-first' : 'family-first';
+}
+function joinName(family, given, order){
+  var parts = order === 'given-first' ? [given, family] : [family, given];
+  return parts.filter(Boolean).join(' ');
+}
 function val(id){ return document.getElementById(id).value.trim(); }
 function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function vesc(s){ return s.replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n'); }
@@ -2593,7 +2609,7 @@ function clearOutputs(){
   document.getElementById('out').style.display = 'none';
 }
 var hasOutput = false;
-['f-family','f-given','f-family-kana','f-given-kana','f-org','f-title','f-catch','f-email','f-tel','f-url','f-pageurl','f-logo'].forEach(function(id){
+['f-family','f-given','f-family-kana','f-given-kana','f-order','f-org','f-title','f-catch','f-email','f-tel','f-url','f-pageurl','f-logo'].forEach(function(id){
   ['input','change'].forEach(function(ev){
     document.getElementById(id).addEventListener(ev, function(){
       if(!hasOutput) return;
@@ -2610,8 +2626,9 @@ document.getElementById('btn-gen').addEventListener('click', function(){
   clearOutputs(); hasOutput = false;
   var d = { family: val('f-family'), given: val('f-given'), familyKana: val('f-family-kana'), givenKana: val('f-given-kana'), org: val('f-org'), title: val('f-title'), catch: val('f-catch'),
             email: val('f-email'), tel: val('f-tel'), url: val('f-url'), pageurl: val('f-pageurl') };
-  d.name = [d.family, d.given].filter(Boolean).join(' ');
-  d.kana = [d.familyKana, d.givenKana].filter(Boolean).join(' ');
+  d.order = resolveOrder(document.getElementById('f-order').value, d.family, d.given);
+  d.name = joinName(d.family, d.given, d.order);
+  d.kana = joinName(d.familyKana, d.givenKana, d.order);
   var errs = [];
   if(!d.family) errs.push('姓を入れてください。');
   if(d.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)) errs.push('メールアドレスの形が正しくありません。');
