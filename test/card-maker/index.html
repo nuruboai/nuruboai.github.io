@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>デジタル名刺ジェネレーター（試作v1.4.1）</title>
+<title>デジタル名刺ジェネレーター（試作v1.4.2）</title>
 <style>
   body{font-family:-apple-system,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;background:#f4f6f5;color:#222;margin:0;padding:16px;}
   .wrap{max-width:720px;margin:0 auto;}
@@ -31,7 +31,7 @@
 </head>
 <body>
 <div class="wrap">
-<h1>デジタル名刺ジェネレーター（試作v1.4.1）</h1>
+<h1>デジタル名刺ジェネレーター（試作v1.4.2）</h1>
 <p class="note">情報を入れると、名刺ページ・連絡先ファイル（vCard）・QRコードを作ります。<br>
 <b>入力した情報はこのページの中だけで処理され、どこにも送信されません。</b>このファイル1つで動きます。</p>
 
@@ -89,8 +89,8 @@
     <div>
       <h3>対面版（電話番号あり）</h3>
       <iframe class="preview" id="pv-full"></iframe>
-      <button class="dl" data-dl="page-full">card-full.html を保存</button>
-      <button class="dl" data-dl="vcf-full">contact-full.vcf を保存</button>
+      <button class="dl" data-dl="page-full">対面版_電話あり.html を保存</button>
+      <button class="dl" data-dl="vcf-full">対面版_電話あり.vcf を保存</button>
     </div>
   </div>
 
@@ -2563,13 +2563,15 @@ function drawQR(elId, text, cell){
   return c;
 }
 
+// 保存するQR画像のファイル名（見て分かるように日本語にする）
+var QR_NAMES = {'qr-page':'QR_ページ用', 'qr-vcf-pub':'QR_登録用_公開版_電話なし', 'qr-vcf-full':'QR_登録用_対面版_電話あり'};
 var blobs = {};
 function saveBlob(name, content, type){
   blobs[name] = new Blob([content], {type:type});
 }
 document.querySelectorAll('[data-dl]').forEach(function(b){
   b.addEventListener('click', function(){
-    var map = {'page-pub':['index.html','text/html'], 'page-full':['card-full.html','text/html'], 'vcf-pub':['contact.vcf','text/vcard'], 'vcf-full':['contact-full.vcf','text/vcard']};
+    var map = {'page-pub':['index.html','text/html'], 'page-full':['対面版_電話あり.html','text/html'], 'vcf-pub':['contact.vcf','text/vcard'], 'vcf-full':['対面版_電話あり.vcf','text/vcard']};
     var k = b.getAttribute('data-dl'); var f = map[k]; if(!blobs[k]) return;
     var a = document.createElement('a'); a.href = URL.createObjectURL(blobs[k]); a.download = f[0]; a.click();
     setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
@@ -2579,7 +2581,7 @@ document.querySelectorAll('[data-qr]').forEach(function(b){
   b.addEventListener('click', function(){
     var box = document.getElementById(b.getAttribute('data-qr'));
     var c = box.querySelector('canvas'); if(!c) return;
-    var a = document.createElement('a'); a.href = c.toDataURL('image/png'); a.download = b.getAttribute('data-qr') + '.png'; a.click();
+    var a = document.createElement('a'); a.href = c.toDataURL('image/png'); a.download = QR_NAMES[b.getAttribute('data-qr')] + '.png'; a.click();
   });
 });
 
@@ -2590,7 +2592,7 @@ document.querySelectorAll('[data-qrbig]').forEach(function(b){
     var probe = qrcode(0,'M'); probe.addData(t,'Byte'); probe.make();
     var cell = Math.max(10, Math.ceil(1200 / (probe.getModuleCount() + 8)));
     var c = makeQRCanvas(t, cell);
-    var a = document.createElement('a'); a.href = c.toDataURL('image/png'); a.download = id + '-print.png'; a.click();
+    var a = document.createElement('a'); a.href = c.toDataURL('image/png'); a.download = QR_NAMES[id] + '_印刷用.png'; a.click();
   });
 });
 
@@ -2648,7 +2650,7 @@ document.getElementById('btn-gen').addEventListener('click', function(){
   // QRには写真なし（容量の都合）。ダウンロード用の連絡先ファイルには写真を入れる
   var vcfPub = buildVCard(d, false, false), vcfFull = buildVCard(d, true, false);
   var vcfPubFile = buildVCard(d, false, true), vcfFullFile = buildVCard(d, true, true);
-  var pagePub = buildPage(d, false, 'contact.vcf'), pageFull = buildPage(d, true, 'contact-full.vcf');
+  var pagePub = buildPage(d, false, 'contact.vcf'), pageFull = buildPage(d, true, '対面版_電話あり.vcf');
   saveBlob('vcf-pub', vcfPubFile, 'text/vcard;charset=utf-8');
   saveBlob('vcf-full', vcfFullFile, 'text/vcard;charset=utf-8');
   saveBlob('page-pub', pagePub, 'text/html;charset=utf-8');
