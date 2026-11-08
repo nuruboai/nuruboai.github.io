@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>デジタル名刺ジェネレーター（試作v1.4.2）</title>
+<title>デジタル名刺ジェネレーター（試作v1.4.3）</title>
 <style>
   body{font-family:-apple-system,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;background:#f4f6f5;color:#222;margin:0;padding:16px;}
   .wrap{max-width:720px;margin:0 auto;}
@@ -31,7 +31,7 @@
 </head>
 <body>
 <div class="wrap">
-<h1>デジタル名刺ジェネレーター（試作v1.4.2）</h1>
+<h1>デジタル名刺ジェネレーター（試作v1.4.3）</h1>
 <p class="note">情報を入れると、名刺ページ・連絡先ファイル（vCard）・QRコードを作ります。<br>
 <b>入力した情報はこのページの中だけで処理され、どこにも送信されません。</b>このファイル1つで動きます。</p>
 
@@ -2437,6 +2437,7 @@ var logoData = null;
 var photoB64 = null; // 連絡先ファイル用の写真（JPEG、256px、base64）
 var PHOTO_MAX = 256;
 var logoLoading = false;
+var logoSeq = 0; // ロゴを選ぶたびに増やす。古い読み込みの結果を捨てるため
 var LOGO_MAX = 400; // 名刺ページに埋め込むロゴの最大の幅・高さ（px）
 function setGenBusy(busy){
   var b = document.getElementById('btn-gen');
@@ -2444,16 +2445,18 @@ function setGenBusy(busy){
   b.style.opacity = busy ? '0.6' : '';
 }
 document.getElementById('f-logo').addEventListener('change', function(e){
+  var seq = ++logoSeq;
   var f = e.target.files[0]; logoData = null; photoB64 = null;
   document.getElementById('logo-msg').textContent = '';
   if(!f){ logoLoading = false; setGenBusy(false); return; }
   logoLoading = true; setGenBusy(true);
-  var done = function(data, photo){ logoData = data; photoB64 = photo || null; logoLoading = false; setGenBusy(false); };
+  // 後から選んだ画像があれば、この読み込みの結果は使わない
+  var done = function(data, photo){ if(seq !== logoSeq) return false; logoData = data; photoB64 = photo || null; logoLoading = false; setGenBusy(false); return true; };
   var r = new FileReader();
-  r.onerror = function(){ done(null); document.getElementById('logo-msg').textContent = 'このロゴ画像は読み込めませんでした（HEICなど）。このままだとロゴなしで作られます。JPEGかPNGを選び直してください。'; };
+  r.onerror = function(){ if(done(null)) document.getElementById('logo-msg').textContent = 'このロゴ画像は読み込めませんでした（HEICなど）。このままだとロゴなしで作られます。JPEGかPNGを選び直してください。'; };
   r.onload = function(){
     var img = new Image();
-    img.onerror = function(){ done(null); document.getElementById('logo-msg').textContent = 'このロゴ画像は読み込めませんでした（HEICなど）。このままだとロゴなしで作られます。JPEGかPNGを選び直してください。'; };
+    img.onerror = function(){ if(done(null)) document.getElementById('logo-msg').textContent = 'このロゴ画像は読み込めませんでした（HEICなど）。このままだとロゴなしで作られます。JPEGかPNGを選び直してください。'; };
     img.onload = function(){
       // 大きな写真をそのまま埋め込むとページが重くなるので、LOGO_MAX に縮めて入れる
       var sc = Math.min(1, LOGO_MAX / Math.max(img.width, img.height));
@@ -2494,15 +2497,26 @@ function isThisPage(u){
     return norm(a) === norm(b);
   }catch(e){ return false; }
 }
+// https で始まり、ブラウザが開けるURLかどうか（ポート番号やホスト名の誤りも止める）
+function isValidHttpsUrl(u){
+  if(/\s/.test(u)) return false;
+  try{ var x = new URL(u); return x.protocol === 'https:' && /\./.test(x.hostname) && !/^\./.test(x.hostname) && !/\.$/.test(x.hostname); }catch(e){ return false; }
+}
 function val(id){ return document.getElementById(id).value.trim(); }
 function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function vesc(s){ return s.replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n'); }
 
 // vCardの1行が長いときは75文字ごとに折り返す（続きの行は空白で始める）
+// vCardの1行は75バイト（UTF-8）までが決まり。超えたら、文字の途中で切らないように折り返す（続きの行は空白で始める）
+function utf8len(ch){ var c = ch.codePointAt(0); return c < 0x80 ? 1 : c < 0x800 ? 2 : c < 0x10000 ? 3 : 4; }
 function fold(line){
-  if(line.length <= 75) return line;
-  var out = [line.slice(0,75)];
-  for(var i=75;i<line.length;i+=74) out.push(' ' + line.slice(i,i+74));
+  var out = [], cur = '', size = 0, limit = 75;
+  for(var ch of line){
+    var n = utf8len(ch);
+    if(size + n > limit){ out.push(cur); cur = ' '; size = 1; limit = 75; }
+    cur += ch; size += n;
+  }
+  out.push(cur);
   return out.join('\r\n');
 }
 function buildVCard(d, withPhone, withPhoto){
@@ -2515,11 +2529,11 @@ function buildVCard(d, withPhone, withPhoto){
   if(d.title) L.push('TITLE:' + vesc(d.title));
   if(d.email) L.push('EMAIL;TYPE=INTERNET:' + vesc(d.email));
   if(withPhone && d.tel) L.push('TEL;TYPE=CELL:' + vesc(d.tel));
-  if(d.url) L.push('URL:' + vesc(d.url));
+  if(d.url) L.push('URL:' + d.url); // URLは文字列ではなくURI型なので、; や , をエスケープしない
   if(d.catch) L.push('NOTE:' + vesc(d.catch));
-  if(withPhoto && photoB64) L.push(fold('PHOTO;ENCODING=b;TYPE=JPEG:' + photoB64));
+  if(withPhoto && photoB64) L.push('PHOTO;ENCODING=b;TYPE=JPEG:' + photoB64);
   L.push('END:VCARD');
-  return L.join('\r\n') + '\r\n';
+  return L.map(fold).join('\r\n') + '\r\n';
 }
 
 function buildPage(d, withPhone, vcfName){
@@ -2643,8 +2657,8 @@ document.getElementById('btn-gen').addEventListener('click', function(){
   var errs = [];
   if(!d.family) errs.push('姓を入れてください。');
   if(d.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)) errs.push('メールアドレスの形が正しくありません。');
-  if(d.url && !/^https:\/\/[^\s\/]+\.[^\s\/]+/.test(d.url)) errs.push('ホームページURLは https://example.com/ のような形で入れてください。');
-  if(d.pageurl && !/^https:\/\/[^\s\/]+\.[^\s\/]+/.test(d.pageurl)) errs.push('名刺ページを置くURLは https://example.com/card/ のような形で入れてください。');
+  if(d.url && !isValidHttpsUrl(d.url)) errs.push('ホームページURLは https://example.com/ のような形で入れてください。');
+  if(d.pageurl && !isValidHttpsUrl(d.pageurl)) errs.push('名刺ページを置くURLは https://example.com/card/ のような形で入れてください。');
   else if(d.pageurl && isThisPage(d.pageurl)) errs.push('「名刺ページを置くURL」に、このジェネレーターのURLが入っています。ここには、自分のホームページに置いた名刺ページのURLを入れてください（まだ無ければ空でOK）。');
   if(errs.length){ err.textContent = errs.join('\n'); return; }
   // QRには写真なし（容量の都合）。ダウンロード用の連絡先ファイルには写真を入れる
