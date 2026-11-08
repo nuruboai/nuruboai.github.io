@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>デジタル名刺ジェネレーター（試作v1.4）</title>
+<title>デジタル名刺ジェネレーター（試作v1.4.1）</title>
 <style>
   body{font-family:-apple-system,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;background:#f4f6f5;color:#222;margin:0;padding:16px;}
   .wrap{max-width:720px;margin:0 auto;}
@@ -31,7 +31,7 @@
 </head>
 <body>
 <div class="wrap">
-<h1>デジタル名刺ジェネレーター（試作v1.4）</h1>
+<h1>デジタル名刺ジェネレーター（試作v1.4.1）</h1>
 <p class="note">情報を入れると、名刺ページ・連絡先ファイル（vCard）・QRコードを作ります。<br>
 <b>入力した情報はこのページの中だけで処理され、どこにも送信されません。</b>このファイル1つで動きます。</p>
 
@@ -63,7 +63,7 @@
   <input type="tel" id="f-tel" placeholder="例：090-1234-5678">
   <label>ホームページURL</label>
   <input type="url" id="f-url" placeholder="例：https://example.com/">
-  <label>名刺ページを置くURL <span class="small">― ページ用QRコードの飛び先。後から決めてもOK</span></label>
+  <label>名刺ページを置くURL <span class="small">― 自分のホームページに置いた名刺ページのURL（ページ用QRの飛び先）。このジェネレーターのURLではありません。まだ無ければ空でOK</span></label>
   <input type="url" id="f-pageurl" placeholder="例：https://example.com/card/">
   <label>ロゴ・写真（任意） <span class="small">― 名刺ページと、連絡先ファイル（.vcf）の写真に入ります。登録用QRには容量の都合で入りません</span></label>
   <input type="file" id="f-logo" accept="image/*">
@@ -2485,6 +2485,15 @@ function joinName(family, given, order){
   var parts = order === 'given-first' ? [given, family] : [family, given];
   return parts.filter(Boolean).join(' ');
 }
+// 入力されたURLが、このジェネレーター自身のページかどうか
+function isThisPage(u){
+  try{
+    var a = new URL(u), b = new URL(location.href);
+    if(b.protocol !== 'http:' && b.protocol !== 'https:') return /card-maker\/?/.test(a.pathname);
+    var norm = function(x){ return x.host + x.pathname.replace(/index\.html$/,'').replace(/\/$/,''); };
+    return norm(a) === norm(b);
+  }catch(e){ return false; }
+}
 function val(id){ return document.getElementById(id).value.trim(); }
 function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function vesc(s){ return s.replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n'); }
@@ -2634,6 +2643,7 @@ document.getElementById('btn-gen').addEventListener('click', function(){
   if(d.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)) errs.push('メールアドレスの形が正しくありません。');
   if(d.url && !/^https:\/\/[^\s\/]+\.[^\s\/]+/.test(d.url)) errs.push('ホームページURLは https://example.com/ のような形で入れてください。');
   if(d.pageurl && !/^https:\/\/[^\s\/]+\.[^\s\/]+/.test(d.pageurl)) errs.push('名刺ページを置くURLは https://example.com/card/ のような形で入れてください。');
+  else if(d.pageurl && isThisPage(d.pageurl)) errs.push('「名刺ページを置くURL」に、このジェネレーターのURLが入っています。ここには、自分のホームページに置いた名刺ページのURLを入れてください（まだ無ければ空でOK）。');
   if(errs.length){ err.textContent = errs.join('\n'); return; }
   // QRには写真なし（容量の都合）。ダウンロード用の連絡先ファイルには写真を入れる
   var vcfPub = buildVCard(d, false, false), vcfFull = buildVCard(d, true, false);
