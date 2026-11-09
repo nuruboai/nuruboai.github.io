@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>デジタル名刺ジェネレーター（試作v1.5.1）</title>
+<title>デジタル名刺ジェネレーター（試作v1.6）</title>
 <style>
   body{font-family:-apple-system,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;background:#f4f6f5;color:#222;margin:0;padding:16px;}
   .wrap{max-width:720px;margin:0 auto;}
@@ -33,7 +33,7 @@
 </head>
 <body>
 <div class="wrap">
-<h1>デジタル名刺ジェネレーター（試作v1.5.1）</h1>
+<h1>デジタル名刺ジェネレーター（試作v1.6）</h1>
 <p class="note">情報を入れると、名刺ページ・連絡先ファイル（vCard）・QRコードを作ります。<br>
 <b>入力した情報はこのページの中だけで処理され、どこにも送信されません。</b>このファイル1つで動きます。</p>
 
@@ -128,6 +128,11 @@
     <div class="qrbox"><div id="qr-page"></div><p><b>ページ用QR</b><br>名刺ページを開く（ロゴ表示）</p><button class="dl" data-qr="qr-page">PNGで保存</button><br><button class="dl" data-qrbig="qr-page">印刷用（大）PNG</button></div>
     <div class="qrbox"><div id="qr-vcf-pub"></div><p><b>登録用QR（公開版）</b><br>オフラインでも連絡先登録<br>電話番号は入りません</p><button class="dl" data-qr="qr-vcf-pub">PNGで保存</button><br><button class="dl" data-qrbig="qr-vcf-pub">印刷用（大）PNG</button></div>
     <div class="qrbox"><div id="qr-vcf-full"></div><p><b>登録用QR（対面版）</b><br>オフラインでも連絡先登録<br>電話番号入り・対面専用</p><button class="dl" data-qr="qr-vcf-full">PNGで保存</button><br><button class="dl" data-qrbig="qr-vcf-full">印刷用（大）PNG</button></div>
+    <div style="background:#eef6f0;border-radius:10px;padding:10px 12px;margin:10px 0;">
+      <b>名刺交換ですぐ出したいとき</b><br>
+      <button id="btn-home-qr">QRをホーム画面に置く</button>
+      <p class="note" style="margin:2px 0 0;">QRだけを大きく出すページが開きます。そのページを「ホーム画面に追加」すると、アイコンを押すだけでQRが出せます（電波がなくても出ます）。対面版・公開版・ページ用を切り替えられます。</p>
+    </div>
     <p class="note"><b>保存先は自分で選べます：</b>スマホで保存ボタンを押すと共有の画面が出ます。iPhoneは「画像を保存」で<b>写真アプリ</b>、「ファイルに保存」で<b>ファイルアプリ</b>に入ります。Androidは「フォト」「ファイル」「ドライブ」などから選べます。パソコンでは、デスクトップなど保存する場所を選ぶ画面が出ます。<br>登録用QRは、スマホのカメラで読み取ると連絡先の登録画面が開きます（ネット不要）。登録を完了するには、相手のスマホで最後に「保存」を押してもらう必要があります。キャッチフレーズは連絡先のメモ欄に残ります。ロゴ・写真は、容量の都合でQRには入りません（連絡先ファイルと名刺ページには入ります）。</p>
   </div>
 </div>
@@ -3060,6 +3065,29 @@ setGenBusy = function(busy){ _setGenBusy(busy); if(!busy) saveRemember(); };
     document.getElementById('load-msg').textContent = 'この端末に覚えていた内容を消しました。';
   });
 })();
+
+// ===== v1.6：QRをホーム画面に置く =====
+function toB64url(str){
+  var bytes = new TextEncoder().encode(str), bin = '';
+  for(var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function homeQrUrl(){
+  var q = {};
+  if(qrTexts['qr-vcf-full']) q.full = qrTexts['qr-vcf-full'];
+  if(qrTexts['qr-vcf-pub']) q.pub = qrTexts['qr-vcf-pub'];
+  if(qrTexts['qr-page']) q.page = qrTexts['qr-page'];
+  if(!Object.keys(q).length) return null;
+  var d = readForm(); d.order = resolveOrder(d.orderChoice, d.family, d.given);
+  var payload = {v: 1, n: joinName(d.family, d.given, d.order), d: q.full ? 'full' : Object.keys(q)[0], q: q};
+  return new URL('qr/#d=' + toB64url(JSON.stringify(payload)), location.href).href;
+}
+document.getElementById('btn-home-qr').addEventListener('click', function(){
+  var u = homeQrUrl();
+  if(!u){ toast('先に「生成する」を押してください。'); return; }
+  var w = window.open(u, '_blank');
+  if(!w) location.href = u;
+});
 </script>
 </body>
 </html>
