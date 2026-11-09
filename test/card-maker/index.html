@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>デジタル名刺ジェネレーター（試作v1.5）</title>
+<title>デジタル名刺ジェネレーター（試作v1.5.1）</title>
 <style>
   body{font-family:-apple-system,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;background:#f4f6f5;color:#222;margin:0;padding:16px;}
   .wrap{max-width:720px;margin:0 auto;}
@@ -24,6 +24,8 @@
   .qrbox canvas{display:block;max-width:100%;height:auto;margin:0 auto;}
   iframe.preview{width:100%;max-width:340px;height:480px;border:1px solid #ddd;border-radius:12px;display:block;}
   .cols{display:flex;flex-wrap:wrap;gap:16px;}
+  #toast{position:fixed;left:12px;right:12px;bottom:12px;max-width:696px;margin:0 auto;background:#223;color:#fff;border-radius:10px;padding:12px 14px;font-size:14px;line-height:1.6;box-shadow:0 4px 16px rgba(0,0,0,.25);display:none;z-index:10;}
+  #toast button{float:right;margin:0 0 0 8px;padding:4px 10px;font-size:13px;background:#fff;color:#223;}
   .err{color:#b00020;font-size:13px;white-space:pre-wrap;}
   h2{font-size:16px;margin:20px 0 6px;}
   h3{font-size:14px;margin:14px 0 4px;}
@@ -31,7 +33,7 @@
 </head>
 <body>
 <div class="wrap">
-<h1>デジタル名刺ジェネレーター（試作v1.5）</h1>
+<h1>デジタル名刺ジェネレーター（試作v1.5.1）</h1>
 <p class="note">情報を入れると、名刺ページ・連絡先ファイル（vCard）・QRコードを作ります。<br>
 <b>入力した情報はこのページの中だけで処理され、どこにも送信されません。</b>このファイル1つで動きます。</p>
 
@@ -126,9 +128,10 @@
     <div class="qrbox"><div id="qr-page"></div><p><b>ページ用QR</b><br>名刺ページを開く（ロゴ表示）</p><button class="dl" data-qr="qr-page">PNGで保存</button><br><button class="dl" data-qrbig="qr-page">印刷用（大）PNG</button></div>
     <div class="qrbox"><div id="qr-vcf-pub"></div><p><b>登録用QR（公開版）</b><br>オフラインでも連絡先登録<br>電話番号は入りません</p><button class="dl" data-qr="qr-vcf-pub">PNGで保存</button><br><button class="dl" data-qrbig="qr-vcf-pub">印刷用（大）PNG</button></div>
     <div class="qrbox"><div id="qr-vcf-full"></div><p><b>登録用QR（対面版）</b><br>オフラインでも連絡先登録<br>電話番号入り・対面専用</p><button class="dl" data-qr="qr-vcf-full">PNGで保存</button><br><button class="dl" data-qrbig="qr-vcf-full">印刷用（大）PNG</button></div>
-    <p class="note">登録用QRは、スマホのカメラで読み取ると連絡先の登録画面が開きます（ネット不要）。登録を完了するには、相手のスマホで最後に「保存」を押してもらう必要があります。キャッチフレーズは連絡先のメモ欄に残ります。ロゴ・写真は、容量の都合でQRには入りません（連絡先ファイルと名刺ページには入ります）。</p>
+    <p class="note"><b>保存先は自分で選べます：</b>スマホで保存ボタンを押すと共有の画面が出ます。iPhoneは「画像を保存」で<b>写真アプリ</b>、「ファイルに保存」で<b>ファイルアプリ</b>に入ります。Androidは「フォト」「ファイル」「ドライブ」などから選べます。パソコンでは、デスクトップなど保存する場所を選ぶ画面が出ます。<br>登録用QRは、スマホのカメラで読み取ると連絡先の登録画面が開きます（ネット不要）。登録を完了するには、相手のスマホで最後に「保存」を押してもらう必要があります。キャッチフレーズは連絡先のメモ欄に残ります。ロゴ・写真は、容量の都合でQRには入りません（連絡先ファイルと名刺ページには入ります）。</p>
   </div>
 </div>
+<div id="toast" role="status"><button type="button" id="toast-close">閉じる</button><span id="toast-text"></span></div>
 <p class="note">QRコード生成ライブラリ: qrcode-generator (Kazuhiko Arase, MIT License) を使用しています。</p>
 </div>
 
@@ -2626,6 +2629,63 @@ function drawQR(elId, text, cell){
   return c;
 }
 
+// どの端末か（保存先の案内に使う）
+function deviceKind(){
+  var ua = navigator.userAgent || '';
+  if(/iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) return 'ios';
+  if(/Android/.test(ua)) return 'android';
+  return 'pc';
+}
+function whereSaved(){
+  var k = deviceKind();
+  if(k === 'ios') return '「ファイル」アプリ →「ブラウズ」→「iCloud Drive」（または「このiPhone内」）→「ダウンロード」に入っています。';
+  if(k === 'android') return '「ファイル」アプリ →「ダウンロード」に入っています。';
+  return 'パソコンの「ダウンロード」フォルダに入っています。';
+}
+var toastTimer = null;
+function toast(text){
+  document.getElementById('toast-text').textContent = text;
+  document.getElementById('toast').style.display = 'block';
+  clearTimeout(toastTimer); toastTimer = setTimeout(function(){ document.getElementById('toast').style.display = 'none'; }, 15000);
+}
+document.getElementById('toast-close').addEventListener('click', function(){ document.getElementById('toast').style.display = 'none'; });
+// ファイルをダウンロードして、どこに入ったかを出す
+function downloadBlob(blob, name){
+  var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+  toast('「' + name + '」を保存しました。' + whereSaved());
+}
+// 保存先を選んで保存する。スマホは共有の画面（iPhoneは「画像を保存」で写真、「ファイルに保存」でファイルアプリ）、
+// パソコンは保存場所を選ぶ画面（デスクトップなど）。どちらも使えないブラウザはダウンロード
+var SAVE_TYPES = {'.png': ['PNG画像','image/png'], '.html': ['名刺ページ','text/html'], '.vcf': ['連絡先ファイル','text/vcard']};
+function saveWithChoice(blob, name){
+  var ext = (name.match(/\.[a-z]+$/i) || [''])[0].toLowerCase(), t = SAVE_TYPES[ext] || ['ファイル', blob.type || 'application/octet-stream'];
+  if(deviceKind() === 'pc'){
+    if(window.showSaveFilePicker){
+      var acc = {}; acc[t[1]] = [ext];
+      window.showSaveFilePicker({suggestedName: name, types: [{description: t[0], accept: acc}]})
+        .then(function(h){ return h.createWritable().then(function(w){ return w.write(blob).then(function(){ return w.close(); }); }); })
+        .then(function(){ toast('「' + name + '」を、選んだ場所に保存しました。'); })
+        .catch(function(e){ if(e && e.name === 'AbortError') return; downloadBlob(blob, name); });
+      return;
+    }
+    downloadBlob(blob, name); return;
+  }
+  try{
+    var file = new File([blob], name, {type: t[1]});
+    if(navigator.canShare && navigator.canShare({files: [file]})){
+      navigator.share({files: [file]}).then(function(){
+        toast(deviceKind() === 'ios'
+          ? (ext === '.png' ? '「画像を保存」を選んだときは写真アプリ、「ファイルに保存」を選んだときはファイルアプリの、選んだ場所に入っています。' : '「ファイルに保存」を選んだときは、ファイルアプリの選んだ場所に入っています。')
+          : '選んだ保存先に入っています（「フォト」「ファイル」「ドライブ」など）。');
+      }).catch(function(e){ if(e && e.name === 'AbortError') return; downloadBlob(blob, name); });
+      return;
+    }
+  }catch(e){}
+  downloadBlob(blob, name);
+}
+function saveQRImage(canvas, name){ canvas.toBlob(function(blob){ if(blob) saveWithChoice(blob, name); }, 'image/png'); }
 // 保存するQR画像のファイル名（見て分かるように日本語にする）
 var QR_NAMES = {'qr-page':'QR_ページ用', 'qr-vcf-pub':'QR_登録用_公開版_電話なし', 'qr-vcf-full':'QR_登録用_対面版_電話あり'};
 var blobs = {};
@@ -2636,15 +2696,14 @@ document.querySelectorAll('[data-dl]').forEach(function(b){
   b.addEventListener('click', function(){
     var map = {'page-pub':['index.html','text/html'], 'page-full':['対面版_電話あり.html','text/html'], 'vcf-pub':['contact.vcf','text/vcard'], 'vcf-full':['対面版_電話あり.vcf','text/vcard']};
     var k = b.getAttribute('data-dl'); var f = map[k]; if(!blobs[k]) return;
-    var a = document.createElement('a'); a.href = URL.createObjectURL(blobs[k]); a.download = f[0]; a.click();
-    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+    saveWithChoice(blobs[k], f[0]);
   });
 });
 document.querySelectorAll('[data-qr]').forEach(function(b){
   b.addEventListener('click', function(){
     var box = document.getElementById(b.getAttribute('data-qr'));
     var c = box.querySelector('canvas'); if(!c) return;
-    var a = document.createElement('a'); a.href = c.toDataURL('image/png'); a.download = QR_NAMES[b.getAttribute('data-qr')] + '.png'; a.click();
+    saveQRImage(c, QR_NAMES[b.getAttribute('data-qr')] + '.png');
   });
 });
 
@@ -2655,7 +2714,7 @@ document.querySelectorAll('[data-qrbig]').forEach(function(b){
     var probe = qrcode(0,'M'); probe.addData(t,'Byte'); probe.make();
     var cell = Math.max(10, Math.ceil(1200 / (probe.getModuleCount() + 8)));
     var c = makeQRCanvas(t, cell);
-    var a = document.createElement('a'); a.href = c.toDataURL('image/png'); a.download = QR_NAMES[id] + '_印刷用.png'; a.click();
+    saveQRImage(c, QR_NAMES[id] + '_印刷用.png');
   });
 });
 
@@ -2922,16 +2981,12 @@ function backupFile(){
   var name = '名刺データ_' + (d.name || d.family).replace(/[\\\/:*?"<>|\s]+/g, '') + '.vcf';
   return { name: name, text: text };
 }
-function downloadText(name, text){
-  var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], {type:'text/vcard;charset=utf-8'})); a.download = name;
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
-}
+function downloadText(name, text){ downloadBlob(new Blob([text], {type:'text/vcard;charset=utf-8'}), name); }
 document.getElementById('btn-save-local').addEventListener('click', function(){
   var m = document.getElementById('save-msg'); m.textContent = '';
   var b = backupFile(); if(!b) return;
   downloadText(b.name, b.text);
-  m.textContent = '「' + b.name + '」を保存しました（端末のダウンロードに入ります）。次に直すときは、上の「保存したファイル（vCard）を読み込む」でこのファイルを選んでください。';
+  m.textContent = '「' + b.name + '」を保存しました。' + whereSaved() + '次に直すときは、上の「保存したファイル（vCard）を読み込む」でこのファイルを選んでください。';
 });
 document.getElementById('btn-save-pick').addEventListener('click', function(){
   var m = document.getElementById('save-msg'); m.textContent = '';
