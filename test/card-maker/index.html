@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>デジタル名刺ジェネレーター（試作v1.6）</title>
+<title>デジタル名刺ジェネレーター（試作v1.6.1）</title>
 <style>
   body{font-family:-apple-system,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;background:#f4f6f5;color:#222;margin:0;padding:16px;}
   .wrap{max-width:720px;margin:0 auto;}
@@ -33,7 +33,7 @@
 </head>
 <body>
 <div class="wrap">
-<h1>デジタル名刺ジェネレーター（試作v1.6）</h1>
+<h1>デジタル名刺ジェネレーター（試作v1.6.1）</h1>
 <p class="note">情報を入れると、名刺ページ・連絡先ファイル（vCard）・QRコードを作ります。<br>
 <b>入力した情報はこのページの中だけで処理され、どこにも送信されません。</b>このファイル1つで動きます。</p>
 
@@ -71,15 +71,12 @@
   <input type="text" id="f-org" placeholder="例：サンプル商店">
   <label>肩書き（任意）</label>
   <input type="text" id="f-title" placeholder="例：代表">
-  <label>特徴・キャッチフレーズ <span class="small">― 名刺の冒頭と、連絡先のメモ欄に入ります。「どんな人だったか」を思い出してもらうための一言</span></label>
-  <textarea id="f-catch" rows="2" placeholder="例：地域のお店のホームページ作りをお手伝いしています"></textarea>
+  <label>特徴・キャッチフレーズ・メモ <span class="small">― 名刺の冒頭と、連絡先のメモ欄に入ります。「どんな人だったか」を思い出してもらう一言や、LINE・Instagram・YouTube などのアカウントも自由に書けます</span></label>
+  <textarea id="f-catch" rows="2" placeholder="例：地域のお店のホームページ作りをお手伝いしています&#10;LINE：taro_yamada　Instagram：@taro"></textarea>
   <label>メールアドレス</label>
   <input type="email" id="f-email" placeholder="例：you@example.com">
   <label>電話番号 <span class="small">― 「対面版」にだけ入ります。公開版には入りません</span></label>
   <input type="tel" id="f-tel" placeholder="例：090-1234-5678">
-  <label>LINE（任意） <span class="small">― LINE ID か、LINEの「友だち追加」のURL。最初は「対面版」にだけ入ります</span></label>
-  <input type="text" id="f-line" placeholder="例：taro_yamada　または　https://line.me/ti/p/…" autocapitalize="off" autocomplete="off">
-  <label class="small" style="font-weight:400;"><input type="checkbox" id="f-line-pub"> LINEを公開版（名刺ページ・公開版の連絡先とQR）にも入れる</label>
   <label>ホームページURL</label>
   <input type="url" id="f-url" placeholder="例：https://example.com/">
   <label>名刺ページを置くURL <span class="small">― 自分のホームページに置いた名刺ページのURL（ページ用QRの飛び先）。このジェネレーターのURLではありません。まだ無ければ空でOK</span></label>
@@ -2559,14 +2556,6 @@ function fold(line){
   out.push(cur);
   return out.join('\r\n');
 }
-// LINEの入力（IDかURL）から、友だち追加のURLを作る
-function lineUrl(v){
-  if(!v) return '';
-  if(/^https:\/\/line\.me\//i.test(v)) return v;
-  if(v.charAt(0) === '@') return 'https://line.me/R/ti/p/' + encodeURIComponent(v);
-  return 'https://line.me/ti/p/~' + encodeURIComponent(v);
-}
-function isValidLine(v){ return /^https:\/\/line\.me\/\S+$/i.test(v) || /^@?[A-Za-z0-9._-]{1,40}$/.test(v); }
 function buildVCard(d, withPhone, withPhoto, backup){
   var L = ['BEGIN:VCARD','VERSION:3.0'];
   L.push('N:' + vesc(d.family) + ';' + vesc(d.given) + ';;;');
@@ -2578,15 +2567,12 @@ function buildVCard(d, withPhone, withPhoto, backup){
   if(d.email) L.push('EMAIL;TYPE=INTERNET:' + vesc(d.email));
   if(withPhone && d.tel) L.push('TEL;TYPE=CELL:' + vesc(d.tel));
   if(d.url) L.push('URL:' + d.url); // URLは文字列ではなくURI型なので、; や , をエスケープしない
-  if(d.line && (withPhone || d.linePub)){ L.push('item1.URL:' + lineUrl(d.line)); L.push('item1.X-ABLabel:LINE'); }
   if(d.catch) L.push('NOTE:' + vesc(d.catch));
   if(withPhoto && photoB64) L.push('PHOTO;ENCODING=b;TYPE=JPEG:' + photoB64);
   if(backup){
     // このジェネレーターで読み戻すための項目（ほかのアプリは無視します）
     L.push('X-NURUBO-ORDER:' + vesc(d.orderChoice || 'auto'));
     if(d.pageurl) L.push('X-NURUBO-PAGEURL:' + d.pageurl);
-    if(d.line) L.push('X-NURUBO-LINE:' + vesc(d.line));
-    L.push('X-NURUBO-LINE-PUB:' + (d.linePub ? '1' : '0'));
   }
   L.push('END:VCARD');
   return L.map(fold).join('\r\n') + '\r\n';
@@ -2599,7 +2585,6 @@ function buildPage(d, withPhone, vcfName){
   if(d.email) contacts += '<p>✉️ ' + esc(d.email) + '</p>';
   if(withPhone && d.tel) contacts += '<p>📞 ' + esc(d.tel) + '</p>';
   if(d.url) contacts += '<p>🌐 <a href="' + esc(d.url) + '">' + esc(d.url) + '</a></p>';
-  if(d.line && (withPhone || d.linePub)) contacts += '<p>💬 <a href="' + esc(lineUrl(d.line)) + '">LINEで友だち追加</a></p>';
   var logo = logoData ? '<img class="logo" src="' + logoData + '" alt="">' : '';
   return '<!DOCTYPE html>\n<html lang="ja">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n<title>' + esc(d.name) + '｜デジタル名刺</title>\n<style>\nbody{font-family:-apple-system,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;background:#f4f6f5;margin:0;padding:24px 16px;color:#222;}\n.card{max-width:420px;margin:24px auto;background:#fff;border-radius:16px;padding:28px 22px;box-shadow:0 2px 10px rgba(0,0,0,.08);text-align:center;}\n.logo{width:96px;height:96px;object-fit:contain;border-radius:16px;}\nh1{font-size:24px;margin:12px 0 2px;}\n.org{color:#555;margin:2px 0 10px;font-size:14px;}\n.catch{background:#eef6f0;border-radius:10px;padding:12px;font-size:15px;line-height:1.6;margin:12px 0;}\n.contacts{text-align:left;font-size:15px;line-height:1.9;margin:14px 0;word-break:break-all;}\na.btn{display:block;background:#1f7a4d;color:#fff;text-decoration:none;border-radius:10px;padding:14px;font-size:16px;margin-top:16px;}\n.guide{font-size:12px;color:#666;line-height:1.7;margin-top:12px;text-align:left;}\n</style>\n</head>\n<body>\n<div class="card">\n' + logo + '\n<h1>' + esc(d.name) + '</h1>\n' + (d.kana ? '<p class="org" style="margin:0 0 6px;font-size:12px;">' + esc(d.kana) + '</p>' : '') + rows + (d.catch ? '<div class="catch">' + esc(d.catch) + '</div>' : '') + '\n<div class="contacts">' + contacts + '</div>\n<a class="btn" href="' + vcfName + '" download>連絡先に追加する</a>\n<p class="guide">iPhoneの場合：ボタンを押すと連絡先のプレビューが出ます。「新規連絡先を作成」→右上の「完了」で登録されます（✓はプレビューを閉じるだけです）。</p>\n</div>\n</body>\n</html>';
 }
@@ -2735,8 +2720,6 @@ document.getElementById('btn-sample').addEventListener('click', function(){
   document.getElementById('f-tel').value = '090-0000-0000';
   document.getElementById('f-url').value = 'https://example.com/';
   document.getElementById('f-pageurl').value = 'https://example.com/card/';
-  document.getElementById('f-line').value = 'taro_yamada';
-  document.getElementById('f-line-pub').checked = false;
   if(hasOutput){ clearOutputs(); hasOutput = false; document.getElementById('stale').style.display = 'block'; }
 });
 
@@ -2749,7 +2732,7 @@ function clearOutputs(){
   document.getElementById('out').style.display = 'none';
 }
 var hasOutput = false;
-['f-family','f-given','f-family-kana','f-given-kana','f-order','f-org','f-title','f-catch','f-email','f-tel','f-line','f-line-pub','f-url','f-pageurl','f-logo'].forEach(function(id){
+['f-family','f-given','f-family-kana','f-given-kana','f-order','f-org','f-title','f-catch','f-email','f-tel','f-url','f-pageurl','f-logo'].forEach(function(id){
   ['input','change'].forEach(function(ev){
     document.getElementById(id).addEventListener(ev, function(){
       if(!hasOutput) return;
@@ -2772,7 +2755,6 @@ document.getElementById('btn-gen').addEventListener('click', function(){
   if(!d.family) errs.push('姓を入れてください。');
   if(d.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)) errs.push('メールアドレスの形が正しくありません。');
   if(d.url && !isValidHttpsUrl(d.url)) errs.push('ホームページURLは https://example.com/ のような形で入れてください。');
-  if(d.line && !isValidLine(d.line)) errs.push('LINEは、LINE ID（英数字と . - _）か、https://line.me/ で始まるURLを入れてください。');
   if(d.pageurl && !isValidHttpsUrl(d.pageurl)) errs.push('名刺ページを置くURLは https://example.com/card/ のような形で入れてください。');
   else if(d.pageurl && isThisPage(d.pageurl)) errs.push('「名刺ページを置くURL」に、このジェネレーターのURLが入っています。ここには、自分のホームページに置いた名刺ページのURLを入れてください（まだ無ければ空でOK）。');
   if(errs.length){ err.textContent = errs.join('\n'); return; }
@@ -2798,10 +2780,10 @@ document.getElementById('btn-gen').addEventListener('click', function(){
 });
 
 // ===== v1.5：読み込み・保存・この端末に覚える =====
-var FIELDS = ['f-family','f-given','f-family-kana','f-given-kana','f-org','f-title','f-catch','f-email','f-tel','f-line','f-url','f-pageurl'];
+var FIELDS = ['f-family','f-given','f-family-kana','f-given-kana','f-org','f-title','f-catch','f-email','f-tel','f-url','f-pageurl'];
 function readForm(){
   return { family: val('f-family'), given: val('f-given'), familyKana: val('f-family-kana'), givenKana: val('f-given-kana'), org: val('f-org'), title: val('f-title'), catch: val('f-catch'),
-           email: val('f-email'), tel: val('f-tel'), line: val('f-line'), linePub: document.getElementById('f-line-pub').checked,
+           email: val('f-email'), tel: val('f-tel'),
            url: val('f-url'), pageurl: val('f-pageurl'), orderChoice: document.getElementById('f-order').value };
 }
 function formHasContent(){ return FIELDS.some(function(id){ return val(id) !== ''; }) || !!logoData; }
@@ -2810,11 +2792,12 @@ function markStale(){
 }
 // 入力欄に入れる。fill の項目だけでなく、ほかの欄も空にして置き換える
 function fillForm(v){
+  // 以前のLINE欄や、読み込んだ連絡先のLINEは、メモ欄の最後に足す
+  if(v.line && (v.catch || '').indexOf(v.line) < 0) v.catch = (v.catch ? v.catch + '\n' : '') + 'LINE：' + v.line;
   FIELDS.forEach(function(id){ document.getElementById(id).value = ''; });
-  var map = {family:'f-family', given:'f-given', familyKana:'f-family-kana', givenKana:'f-given-kana', org:'f-org', title:'f-title', catch:'f-catch', email:'f-email', tel:'f-tel', line:'f-line', url:'f-url', pageurl:'f-pageurl'};
+  var map = {family:'f-family', given:'f-given', familyKana:'f-family-kana', givenKana:'f-given-kana', org:'f-org', title:'f-title', catch:'f-catch', email:'f-email', tel:'f-tel', url:'f-url', pageurl:'f-pageurl'};
   Object.keys(map).forEach(function(k){ if(v[k]) document.getElementById(map[k]).value = v[k]; });
   var o = v.orderChoice; document.getElementById('f-order').value = (o === 'family-first' || o === 'given-first') ? o : 'auto';
-  document.getElementById('f-line-pub').checked = !!v.linePub;
   document.getElementById('f-logo').value = '';
   document.getElementById('logo-msg').textContent = '';
   markStale();
@@ -2885,7 +2868,6 @@ function parseVCard(text){
     else if(name === 'X-NURUBO-ORDER') v.orderChoice = vunesc(value).trim();
     else if(name === 'X-NURUBO-PAGEURL') v.pageurl = value.trim();
     else if(name === 'X-NURUBO-LINE') v.line = vunesc(value).trim();
-    else if(name === 'X-NURUBO-LINE-PUB') v.linePub = value.trim() === '1';
     else if(name === 'PHOTO' && !photo){
       var t = (params.match(/TYPE=([A-Z]+)/) || params.match(/(?:^|;)(JPEG|PNG|GIF)(?:;|$)/) || [])[1];
       if(/^data:image\//i.test(value)) photo = value.replace(/\s/g, '');
@@ -2977,7 +2959,6 @@ function backupFile(){
   var d = readForm();
   var errs = [];
   if(!d.family) errs.push('保存する前に、姓を入れてください。');
-  if(d.line && !isValidLine(d.line)) errs.push('LINEの形が正しくありません。');
   if(logoLoading) errs.push('ロゴの読み込みが終わってから保存してください。');
   if(errs.length){ document.getElementById('save-msg').textContent = errs.join('\n'); return null; }
   d.order = resolveOrder(d.orderChoice, d.family, d.given);
@@ -3035,7 +3016,7 @@ function saveRemember(){
 document.getElementById('f-remember').addEventListener('change', function(e){
   var m = document.getElementById('save-msg');
   if(e.target.checked){
-    if(!window.confirm('この端末のブラウザに、入力内容（電話番号・LINE・ロゴも含みます）を覚えておきます。共用の端末では使わないでください。よろしいですか？')){ e.target.checked = false; return; }
+    if(!window.confirm('この端末のブラウザに、入力内容（電話番号・ロゴも含みます）を覚えておきます。共用の端末では使わないでください。よろしいですか？')){ e.target.checked = false; return; }
     m.textContent = 'この端末に覚えておきます。やめたいときは、チェックを外すと消えます。';
     saveRemember();
   } else {
@@ -3043,7 +3024,7 @@ document.getElementById('f-remember').addEventListener('change', function(e){
     m.textContent = 'この端末に覚えていた内容を消しました。';
   }
 });
-FIELDS.concat(['f-order','f-line-pub']).forEach(function(id){ ['input','change'].forEach(function(ev){ document.getElementById(id).addEventListener(ev, saveRemember); }); });
+FIELDS.concat(['f-order']).forEach(function(id){ ['input','change'].forEach(function(ev){ document.getElementById(id).addEventListener(ev, saveRemember); }); });
 // ロゴは読み込みが終わってから覚える
 var _setGenBusy = setGenBusy;
 setGenBusy = function(busy){ _setGenBusy(busy); if(!busy) saveRemember(); };
