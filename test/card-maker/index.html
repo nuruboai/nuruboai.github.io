@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>デジタル名刺ジェネレーター（試作v1.4.3）</title>
+<title>デジタル名刺ジェネレーター（試作v1.5）</title>
 <style>
   body{font-family:-apple-system,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;background:#f4f6f5;color:#222;margin:0;padding:16px;}
   .wrap{max-width:720px;margin:0 auto;}
@@ -31,9 +31,23 @@
 </head>
 <body>
 <div class="wrap">
-<h1>デジタル名刺ジェネレーター（試作v1.4.3）</h1>
+<h1>デジタル名刺ジェネレーター（試作v1.5）</h1>
 <p class="note">情報を入れると、名刺ページ・連絡先ファイル（vCard）・QRコードを作ります。<br>
 <b>入力した情報はこのページの中だけで処理され、どこにも送信されません。</b>このファイル1つで動きます。</p>
+
+<div class="card" id="load-box">
+  <b>前に入れた内容や、自分の連絡先から始める</b>
+  <p class="note" style="margin:4px 0 0;">読み込みは、ボタンを押してファイルや連絡先を選んだときだけ行います。</p>
+  <div>
+    <button class="sub" id="btn-contacts" style="display:none;">連絡先から読み込む</button>
+    <button class="sub" id="btn-load-vcf">保存したファイル（vCard）を読み込む</button>
+    <input type="file" id="f-load" accept=".vcf,.vcard,text/vcard,text/x-vcard,text/directory" style="display:none;">
+  </div>
+  <p class="note" id="contacts-guide" style="margin:2px 0 0;">iPhoneで自分の連絡先から始めるとき：連絡先アプリで自分のカードを開き、「連絡先を共有」→「ファイルに保存」で保存してから、上のボタンでそのファイルを選んでください。</p>
+  <p class="note" id="remember-banner" style="display:none;background:#fff7e0;border-radius:8px;padding:8px;">この端末に、前回覚えておいた入力内容があります。
+    <button class="sub" id="btn-remember-load">読み込む</button><button class="sub" id="btn-remember-forget">消す</button></p>
+  <p class="err" id="load-msg" style="color:#1f5f8b;"></p>
+</div>
 
 <div class="card">
   <div style="display:flex;gap:10px;">
@@ -61,6 +75,9 @@
   <input type="email" id="f-email" placeholder="例：you@example.com">
   <label>電話番号 <span class="small">― 「対面版」にだけ入ります。公開版には入りません</span></label>
   <input type="tel" id="f-tel" placeholder="例：090-1234-5678">
+  <label>LINE（任意） <span class="small">― LINE ID か、LINEの「友だち追加」のURL。最初は「対面版」にだけ入ります</span></label>
+  <input type="text" id="f-line" placeholder="例：taro_yamada　または　https://line.me/ti/p/…" autocapitalize="off" autocomplete="off">
+  <label class="small" style="font-weight:400;"><input type="checkbox" id="f-line-pub"> LINEを公開版（名刺ページ・公開版の連絡先とQR）にも入れる</label>
   <label>ホームページURL</label>
   <input type="url" id="f-url" placeholder="例：https://example.com/">
   <label>名刺ページを置くURL <span class="small">― 自分のホームページに置いた名刺ページのURL（ページ用QRの飛び先）。このジェネレーターのURLではありません。まだ無ければ空でOK</span></label>
@@ -73,6 +90,16 @@
     <button class="sub" id="btn-sample">サンプルで試す</button>
   </div>
   <p class="err" id="err"></p>
+  <div style="border-top:1px solid #e4e8e6;margin-top:12px;padding-top:8px;">
+    <b style="font-size:14px;">入力内容を保存する</b> <span class="small">― 次に直すとき、このファイルを読み込めば全部の欄が戻ります（ロゴも入ります）</span>
+    <div>
+      <button class="sub" id="btn-save-local">この端末に保存</button>
+      <button class="sub" id="btn-save-pick">保存先を選んで保存</button>
+    </div>
+    <p class="note" style="margin:2px 0 0;">「この端末に保存」は、端末のダウンロードに入ります。iPhoneは最初の設定だとiCloud Driveに入るので、端末の中に置きたいときは「設定」→「アプリ」→「Safari」→「ダウンロード」を「このiPhone内」にしてください。Googleドライブなどに置きたいときは「保存先を選んで保存」を使ってください。</p>
+    <p class="err" id="save-msg" style="color:#1f5f8b;"></p>
+    <label class="small" style="font-weight:400;margin-top:8px;"><input type="checkbox" id="f-remember"> この端末のブラウザに、入力内容を覚えておく（次に開いたとき、読み込むかどうか聞きます）</label>
+  </div>
   <p class="note" id="stale" style="display:none;color:#b00020;"><b>入力が変わりました。</b>もう一度「生成する」を押してください（前の結果は消しました）。</p>
 </div>
 
@@ -2444,38 +2471,43 @@ function setGenBusy(busy){
   b.disabled = busy; b.textContent = busy ? 'ロゴを読み込み中…' : '生成する';
   b.style.opacity = busy ? '0.6' : '';
 }
-document.getElementById('f-logo').addEventListener('change', function(e){
+var LOGO_FAIL = 'このロゴ画像は読み込めませんでした（HEICなど）。このままだとロゴなしで作られます。JPEGかPNGを選び直してください。';
+// 画像（data URL）を縮めて、名刺ページ用のロゴと連絡先用の写真を作る。後から別の画像を選んだら、この結果は捨てる
+function loadImage(dataUrl, onFail, onOk){
   var seq = ++logoSeq;
-  var f = e.target.files[0]; logoData = null; photoB64 = null;
-  document.getElementById('logo-msg').textContent = '';
-  if(!f){ logoLoading = false; setGenBusy(false); return; }
-  logoLoading = true; setGenBusy(true);
-  // 後から選んだ画像があれば、この読み込みの結果は使わない
+  logoData = null; photoB64 = null; logoLoading = true; setGenBusy(true);
   var done = function(data, photo){ if(seq !== logoSeq) return false; logoData = data; photoB64 = photo || null; logoLoading = false; setGenBusy(false); return true; };
-  var r = new FileReader();
-  r.onerror = function(){ if(done(null)) document.getElementById('logo-msg').textContent = 'このロゴ画像は読み込めませんでした（HEICなど）。このままだとロゴなしで作られます。JPEGかPNGを選び直してください。'; };
-  r.onload = function(){
-    var img = new Image();
-    img.onerror = function(){ if(done(null)) document.getElementById('logo-msg').textContent = 'このロゴ画像は読み込めませんでした（HEICなど）。このままだとロゴなしで作られます。JPEGかPNGを選び直してください。'; };
-    img.onload = function(){
-      // 大きな写真をそのまま埋め込むとページが重くなるので、LOGO_MAX に縮めて入れる
-      var sc = Math.min(1, LOGO_MAX / Math.max(img.width, img.height));
-      var c = document.createElement('canvas');
-      c.width = Math.max(1, Math.round(img.width * sc)); c.height = Math.max(1, Math.round(img.height * sc));
-      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-      var png = c.toDataURL('image/png');
-      // 写真のように重くなる画像はJPEGの方が小さい。透明を残したいロゴはPNGのまま
-      var jpg = (function(){ var c2 = document.createElement('canvas'); c2.width=c.width; c2.height=c.height; var x=c2.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,c2.width,c2.height); x.drawImage(c,0,0); return c2.toDataURL('image/jpeg', 0.85); })();
-      // 連絡先の写真はiPhoneで確実に読めるJPEGにする（透明部分は白）
-      var ps = Math.min(1, PHOTO_MAX / Math.max(img.width, img.height));
-      var pc = document.createElement('canvas');
-      pc.width = Math.max(1, Math.round(img.width * ps)); pc.height = Math.max(1, Math.round(img.height * ps));
-      var px = pc.getContext('2d'); px.fillStyle = '#fff'; px.fillRect(0,0,pc.width,pc.height); px.drawImage(img, 0, 0, pc.width, pc.height);
-      var photo = pc.toDataURL('image/jpeg', 0.85).split(',')[1];
-      done(png.length > 200000 ? jpg : png, photo);
-    };
-    img.src = r.result;
+  var img = new Image();
+  img.onerror = function(){ if(done(null)) onFail(); };
+  img.onload = function(){
+    // 大きな写真をそのまま埋め込むとページが重くなるので、LOGO_MAX に縮めて入れる
+    var sc = Math.min(1, LOGO_MAX / Math.max(img.width, img.height));
+    var c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(img.width * sc)); c.height = Math.max(1, Math.round(img.height * sc));
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    var png = c.toDataURL('image/png');
+    // 写真のように重くなる画像はJPEGの方が小さい。透明を残したいロゴはPNGのまま
+    var jpg = (function(){ var c2 = document.createElement('canvas'); c2.width=c.width; c2.height=c.height; var x=c2.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,c2.width,c2.height); x.drawImage(c,0,0); return c2.toDataURL('image/jpeg', 0.85); })();
+    // 連絡先の写真はiPhoneで確実に読めるJPEGにする（透明部分は白）
+    var ps = Math.min(1, PHOTO_MAX / Math.max(img.width, img.height));
+    var pc = document.createElement('canvas');
+    pc.width = Math.max(1, Math.round(img.width * ps)); pc.height = Math.max(1, Math.round(img.height * ps));
+    var px = pc.getContext('2d'); px.fillStyle = '#fff'; px.fillRect(0,0,pc.width,pc.height); px.drawImage(img, 0, 0, pc.width, pc.height);
+    var photo = pc.toDataURL('image/jpeg', 0.85).split(',')[1];
+    if(done(png.length > 200000 ? jpg : png, photo) && onOk) onOk();
   };
+  img.src = dataUrl;
+}
+function clearLogo(){ ++logoSeq; logoData = null; photoB64 = null; logoLoading = false; setGenBusy(false); }
+document.getElementById('f-logo').addEventListener('change', function(e){
+  var f = e.target.files[0];
+  document.getElementById('logo-msg').textContent = '';
+  if(!f){ clearLogo(); return; }
+  var seq0 = ++logoSeq; logoData = null; photoB64 = null; logoLoading = true; setGenBusy(true);
+  var r = new FileReader();
+  var fail = function(){ document.getElementById('logo-msg').textContent = LOGO_FAIL; };
+  r.onerror = function(){ if(seq0 === logoSeq){ clearLogo(); fail(); } };
+  r.onload = function(){ if(seq0 === logoSeq) loadImage(r.result, fail); };
   r.readAsDataURL(f);
 });
 // 表示順を決める。自動のときは、姓と名がどちらもローマ字（ASCII）だけなら 名→姓、それ以外は 姓→名
@@ -2519,7 +2551,15 @@ function fold(line){
   out.push(cur);
   return out.join('\r\n');
 }
-function buildVCard(d, withPhone, withPhoto){
+// LINEの入力（IDかURL）から、友だち追加のURLを作る
+function lineUrl(v){
+  if(!v) return '';
+  if(/^https:\/\/line\.me\//i.test(v)) return v;
+  if(v.charAt(0) === '@') return 'https://line.me/R/ti/p/' + encodeURIComponent(v);
+  return 'https://line.me/ti/p/~' + encodeURIComponent(v);
+}
+function isValidLine(v){ return /^https:\/\/line\.me\/\S+$/i.test(v) || /^@?[A-Za-z0-9._-]{1,40}$/.test(v); }
+function buildVCard(d, withPhone, withPhoto, backup){
   var L = ['BEGIN:VCARD','VERSION:3.0'];
   L.push('N:' + vesc(d.family) + ';' + vesc(d.given) + ';;;');
   L.push('FN:' + vesc(d.name));
@@ -2530,8 +2570,16 @@ function buildVCard(d, withPhone, withPhoto){
   if(d.email) L.push('EMAIL;TYPE=INTERNET:' + vesc(d.email));
   if(withPhone && d.tel) L.push('TEL;TYPE=CELL:' + vesc(d.tel));
   if(d.url) L.push('URL:' + d.url); // URLは文字列ではなくURI型なので、; や , をエスケープしない
+  if(d.line && (withPhone || d.linePub)){ L.push('item1.URL:' + lineUrl(d.line)); L.push('item1.X-ABLabel:LINE'); }
   if(d.catch) L.push('NOTE:' + vesc(d.catch));
   if(withPhoto && photoB64) L.push('PHOTO;ENCODING=b;TYPE=JPEG:' + photoB64);
+  if(backup){
+    // このジェネレーターで読み戻すための項目（ほかのアプリは無視します）
+    L.push('X-NURUBO-ORDER:' + vesc(d.orderChoice || 'auto'));
+    if(d.pageurl) L.push('X-NURUBO-PAGEURL:' + d.pageurl);
+    if(d.line) L.push('X-NURUBO-LINE:' + vesc(d.line));
+    L.push('X-NURUBO-LINE-PUB:' + (d.linePub ? '1' : '0'));
+  }
   L.push('END:VCARD');
   return L.map(fold).join('\r\n') + '\r\n';
 }
@@ -2543,6 +2591,7 @@ function buildPage(d, withPhone, vcfName){
   if(d.email) contacts += '<p>✉️ ' + esc(d.email) + '</p>';
   if(withPhone && d.tel) contacts += '<p>📞 ' + esc(d.tel) + '</p>';
   if(d.url) contacts += '<p>🌐 <a href="' + esc(d.url) + '">' + esc(d.url) + '</a></p>';
+  if(d.line && (withPhone || d.linePub)) contacts += '<p>💬 <a href="' + esc(lineUrl(d.line)) + '">LINEで友だち追加</a></p>';
   var logo = logoData ? '<img class="logo" src="' + logoData + '" alt="">' : '';
   return '<!DOCTYPE html>\n<html lang="ja">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n<title>' + esc(d.name) + '｜デジタル名刺</title>\n<style>\nbody{font-family:-apple-system,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;background:#f4f6f5;margin:0;padding:24px 16px;color:#222;}\n.card{max-width:420px;margin:24px auto;background:#fff;border-radius:16px;padding:28px 22px;box-shadow:0 2px 10px rgba(0,0,0,.08);text-align:center;}\n.logo{width:96px;height:96px;object-fit:contain;border-radius:16px;}\nh1{font-size:24px;margin:12px 0 2px;}\n.org{color:#555;margin:2px 0 10px;font-size:14px;}\n.catch{background:#eef6f0;border-radius:10px;padding:12px;font-size:15px;line-height:1.6;margin:12px 0;}\n.contacts{text-align:left;font-size:15px;line-height:1.9;margin:14px 0;word-break:break-all;}\na.btn{display:block;background:#1f7a4d;color:#fff;text-decoration:none;border-radius:10px;padding:14px;font-size:16px;margin-top:16px;}\n.guide{font-size:12px;color:#666;line-height:1.7;margin-top:12px;text-align:left;}\n</style>\n</head>\n<body>\n<div class="card">\n' + logo + '\n<h1>' + esc(d.name) + '</h1>\n' + (d.kana ? '<p class="org" style="margin:0 0 6px;font-size:12px;">' + esc(d.kana) + '</p>' : '') + rows + (d.catch ? '<div class="catch">' + esc(d.catch) + '</div>' : '') + '\n<div class="contacts">' + contacts + '</div>\n<a class="btn" href="' + vcfName + '" download>連絡先に追加する</a>\n<p class="guide">iPhoneの場合：ボタンを押すと連絡先のプレビューが出ます。「新規連絡先を作成」→右上の「完了」で登録されます（✓はプレビューを閉じるだけです）。</p>\n</div>\n</body>\n</html>';
 }
@@ -2622,6 +2671,8 @@ document.getElementById('btn-sample').addEventListener('click', function(){
   document.getElementById('f-tel').value = '090-0000-0000';
   document.getElementById('f-url').value = 'https://example.com/';
   document.getElementById('f-pageurl').value = 'https://example.com/card/';
+  document.getElementById('f-line').value = 'taro_yamada';
+  document.getElementById('f-line-pub').checked = false;
   if(hasOutput){ clearOutputs(); hasOutput = false; document.getElementById('stale').style.display = 'block'; }
 });
 
@@ -2634,7 +2685,7 @@ function clearOutputs(){
   document.getElementById('out').style.display = 'none';
 }
 var hasOutput = false;
-['f-family','f-given','f-family-kana','f-given-kana','f-order','f-org','f-title','f-catch','f-email','f-tel','f-url','f-pageurl','f-logo'].forEach(function(id){
+['f-family','f-given','f-family-kana','f-given-kana','f-order','f-org','f-title','f-catch','f-email','f-tel','f-line','f-line-pub','f-url','f-pageurl','f-logo'].forEach(function(id){
   ['input','change'].forEach(function(ev){
     document.getElementById(id).addEventListener(ev, function(){
       if(!hasOutput) return;
@@ -2649,15 +2700,15 @@ document.getElementById('btn-gen').addEventListener('click', function(){
   var err = document.getElementById('err'); err.textContent = '';
   document.getElementById('stale').style.display = 'none';
   clearOutputs(); hasOutput = false;
-  var d = { family: val('f-family'), given: val('f-given'), familyKana: val('f-family-kana'), givenKana: val('f-given-kana'), org: val('f-org'), title: val('f-title'), catch: val('f-catch'),
-            email: val('f-email'), tel: val('f-tel'), url: val('f-url'), pageurl: val('f-pageurl') };
-  d.order = resolveOrder(document.getElementById('f-order').value, d.family, d.given);
+  var d = readForm();
+  d.order = resolveOrder(d.orderChoice, d.family, d.given);
   d.name = joinName(d.family, d.given, d.order);
   d.kana = joinName(d.familyKana, d.givenKana, d.order);
   var errs = [];
   if(!d.family) errs.push('姓を入れてください。');
   if(d.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)) errs.push('メールアドレスの形が正しくありません。');
   if(d.url && !isValidHttpsUrl(d.url)) errs.push('ホームページURLは https://example.com/ のような形で入れてください。');
+  if(d.line && !isValidLine(d.line)) errs.push('LINEは、LINE ID（英数字と . - _）か、https://line.me/ で始まるURLを入れてください。');
   if(d.pageurl && !isValidHttpsUrl(d.pageurl)) errs.push('名刺ページを置くURLは https://example.com/card/ のような形で入れてください。');
   else if(d.pageurl && isThisPage(d.pageurl)) errs.push('「名刺ページを置くURL」に、このジェネレーターのURLが入っています。ここには、自分のホームページに置いた名刺ページのURLを入れてください（まだ無ければ空でOK）。');
   if(errs.length){ err.textContent = errs.join('\n'); return; }
@@ -2681,6 +2732,279 @@ document.getElementById('btn-gen').addEventListener('click', function(){
   err.textContent = msgs.join('\n');
   document.getElementById('out').scrollIntoView({behavior:'smooth'});
 });
+
+// ===== v1.5：読み込み・保存・この端末に覚える =====
+var FIELDS = ['f-family','f-given','f-family-kana','f-given-kana','f-org','f-title','f-catch','f-email','f-tel','f-line','f-url','f-pageurl'];
+function readForm(){
+  return { family: val('f-family'), given: val('f-given'), familyKana: val('f-family-kana'), givenKana: val('f-given-kana'), org: val('f-org'), title: val('f-title'), catch: val('f-catch'),
+           email: val('f-email'), tel: val('f-tel'), line: val('f-line'), linePub: document.getElementById('f-line-pub').checked,
+           url: val('f-url'), pageurl: val('f-pageurl'), orderChoice: document.getElementById('f-order').value };
+}
+function formHasContent(){ return FIELDS.some(function(id){ return val(id) !== ''; }) || !!logoData; }
+function markStale(){
+  if(hasOutput){ clearOutputs(); hasOutput = false; document.getElementById('stale').style.display = 'block'; }
+}
+// 入力欄に入れる。fill の項目だけでなく、ほかの欄も空にして置き換える
+function fillForm(v){
+  FIELDS.forEach(function(id){ document.getElementById(id).value = ''; });
+  var map = {family:'f-family', given:'f-given', familyKana:'f-family-kana', givenKana:'f-given-kana', org:'f-org', title:'f-title', catch:'f-catch', email:'f-email', tel:'f-tel', line:'f-line', url:'f-url', pageurl:'f-pageurl'};
+  Object.keys(map).forEach(function(k){ if(v[k]) document.getElementById(map[k]).value = v[k]; });
+  var o = v.orderChoice; document.getElementById('f-order').value = (o === 'family-first' || o === 'given-first') ? o : 'auto';
+  document.getElementById('f-line-pub').checked = !!v.linePub;
+  document.getElementById('f-logo').value = '';
+  document.getElementById('logo-msg').textContent = '';
+  markStale();
+}
+
+// --- vCard を読む（iPhone・Android・Mac・Windows の書き出し、このジェネレーターの保存ファイル）
+function qpDecode(str, charset){
+  var bytes = [];
+  str = str.replace(/=\r?\n/g, '');
+  for(var i = 0; i < str.length; i++){
+    var ch = str.charAt(i);
+    if(ch === '=' && /^[0-9A-Fa-f]{2}$/.test(str.substr(i+1, 2))){ bytes.push(parseInt(str.substr(i+1, 2), 16)); i += 2; }
+    else { var b = new TextEncoder().encode(ch); for(var j = 0; j < b.length; j++) bytes.push(b[j]); }
+  }
+  try{ return new TextDecoder(charset || 'utf-8').decode(new Uint8Array(bytes)); }catch(e){ return new TextDecoder('utf-8').decode(new Uint8Array(bytes)); }
+}
+function vunesc(s){ return s.replace(/\\([nN,;:\\])/g, function(m, c){ return (c === 'n' || c === 'N') ? '\n' : c; }); }
+function splitUnescaped(s, sep){
+  var out = [], cur = '';
+  for(var i = 0; i < s.length; i++){
+    var c = s.charAt(i);
+    if(c === '\\' && i + 1 < s.length){ cur += c + s.charAt(i+1); i++; }
+    else if(c === sep){ out.push(cur); cur = ''; }
+    else cur += c;
+  }
+  out.push(cur); return out;
+}
+function parseVCard(text){
+  text = text.replace(/^﻿/, '');
+  // 2.1 の quoted-printable は「=」で終わる行が次の行に続く
+  var raw = text.split(/\r\n|\r|\n/), lines = [];
+  for(var i = 0; i < raw.length; i++){
+    var l = raw[i];
+    if((l.charAt(0) === ' ' || l.charAt(0) === '\t') && lines.length){ lines[lines.length-1] += l.substr(1); continue; }
+    if(lines.length && /ENCODING=QUOTED-PRINTABLE/i.test(lines[lines.length-1].split(':')[0]) && /=$/.test(lines[lines.length-1])){ lines[lines.length-1] = lines[lines.length-1].slice(0, -1) + l; continue; }
+    lines.push(l);
+  }
+  var cards = [], cur = null;
+  lines.forEach(function(l){
+    if(/^BEGIN:VCARD$/i.test(l.trim())){ cur = []; return; }
+    if(/^END:VCARD$/i.test(l.trim())){ if(cur) cards.push(cur); cur = null; return; }
+    if(cur && l.indexOf(':') > 0) cur.push(l);
+  });
+  if(!cards.length) return null;
+  var v = {}, emails = [], tels = [], urls = [], labels = {}, photo = null, cardCount = cards.length;
+  cards[0].forEach(function(l){
+    var k = l.indexOf(':'), head = l.substr(0, k), value = l.substr(k + 1);
+    var parts = head.split(';'), name = parts[0], group = '';
+    if(name.indexOf('.') > 0){ group = name.split('.')[0]; name = name.split('.').slice(1).join('.'); }
+    name = name.toUpperCase();
+    var params = parts.slice(1).join(';').toUpperCase();
+    if(/ENCODING=QUOTED-PRINTABLE|(^|;)QUOTED-PRINTABLE/.test(params)){
+      var cs = (params.match(/CHARSET=([A-Z0-9_-]+)/) || [])[1];
+      value = qpDecode(value, cs ? cs.toLowerCase() : 'utf-8');
+    }
+    if(name === 'N'){ var n = splitUnescaped(value, ';'); v.family = vunesc(n[0] || '').trim(); v.given = vunesc(n[1] || '').trim(); }
+    else if(name === 'FN') v.fn = vunesc(value).trim();
+    else if(name === 'X-PHONETIC-LAST-NAME') v.familyKana = vunesc(value).trim();
+    else if(name === 'X-PHONETIC-FIRST-NAME') v.givenKana = vunesc(value).trim();
+    else if(name === 'SOUND' && /X-IRMC-N/.test(params)){ var sn = splitUnescaped(value, ';'); if(!v.familyKana) v.familyKana = vunesc(sn[0] || '').trim(); if(!v.givenKana) v.givenKana = vunesc(sn[1] || '').trim(); }
+    else if(name === 'ORG') v.org = splitUnescaped(value, ';').map(vunesc).filter(function(x){ return x.trim(); }).join(' ').trim();
+    else if(name === 'TITLE') v.title = vunesc(value).trim();
+    else if(name === 'NOTE') v.catch = vunesc(value).trim();
+    else if(name === 'EMAIL') emails.push({v: vunesc(value).trim(), p: params});
+    else if(name === 'TEL') tels.push({v: vunesc(value).trim().replace(/^tel:/i, ''), p: params});
+    else if(name === 'URL') urls.push({v: value.trim().replace(/\\([,;:])/g, '$1'), g: group});
+    else if(name === 'X-ABLABEL' && group) labels[group] = vunesc(value).trim();
+    else if(name === 'X-NURUBO-ORDER') v.orderChoice = vunesc(value).trim();
+    else if(name === 'X-NURUBO-PAGEURL') v.pageurl = value.trim();
+    else if(name === 'X-NURUBO-LINE') v.line = vunesc(value).trim();
+    else if(name === 'X-NURUBO-LINE-PUB') v.linePub = value.trim() === '1';
+    else if(name === 'PHOTO' && !photo){
+      var t = (params.match(/TYPE=([A-Z]+)/) || params.match(/(?:^|;)(JPEG|PNG|GIF)(?:;|$)/) || [])[1];
+      if(/^data:image\//i.test(value)) photo = value.replace(/\s/g, '');
+      else if(/ENCODING=(B|BASE64)|(^|;)BASE64/.test(params)) photo = 'data:image/' + ((t || 'JPEG').toLowerCase() === 'png' ? 'png' : (t || 'jpeg').toLowerCase()) + ';base64,' + value.replace(/\s/g, '');
+    }
+  });
+  if(!v.family && !v.given && v.fn) splitFullName(v.fn, v);
+  // 名刺なので、仕事用 → 優先 → 最初の順で選ぶ
+  var pick = function(arr, res){ for(var i = 0; i < res.length; i++){ var x = arr.filter(function(a){ return res[i].test(a.p); })[0]; if(x) return x.v; } return arr[0] ? arr[0].v : ''; };
+  v.email = pick(emails, [/WORK/, /PREF/]);
+  v.tel = pick(tels, [/CELL/, /PREF/]);
+  urls.forEach(function(u){
+    var isLine = /^https:\/\/line\.me\//i.test(u.v) || /^line$/i.test(labels[u.g] || '');
+    if(isLine){ if(!v.line){ var m = u.v.match(/^https:\/\/line\.me\/ti\/p\/~(.+)$/i); v.line = m ? decodeURIComponent(m[1]) : u.v; } }
+    else if(!v.url && /^https?:\/\//i.test(u.v)) v.url = u.v;
+  });
+  if(v.url && !/^https:\/\//i.test(v.url)) v.url = v.url.replace(/^http:\/\//i, 'https://');
+  v.photo = photo; v.cardCount = cardCount;
+  return v;
+}
+// 姓と名が分かれていない名前（連絡先の選択やFNだけのとき）を分ける
+function splitFullName(full, v){
+  full = (full || '').trim().replace(/　/g, ' ');
+  var p = full.split(/\s+/).filter(Boolean);
+  if(p.length < 2){ v.family = full; v.given = ''; return; }
+  if(/^[\x20-\x7E]*$/.test(full)){ v.given = p.slice(0, -1).join(' '); v.family = p[p.length-1]; }
+  else { v.family = p[0]; v.given = p.slice(1).join(' '); }
+}
+function applyImported(v, sourceText){
+  var msg = document.getElementById('load-msg');
+  var photo = v.photo; delete v.photo;
+  var n = v.cardCount; delete v.cardCount;
+  fillForm(v);
+  var notes = [sourceText + 'を読み込みました。内容を確かめて、足りないところを入れてから「生成する」を押してください。'];
+  if(n > 1) notes.push('ファイルに' + n + '人分の連絡先が入っていたので、最初の1人分を使いました。');
+  if(!v.family) notes.push('姓が入っていません。入れてください。');
+  if(photo){
+    loadImage(photo, function(){ notes.push('写真は読み込めなかったので、ロゴなしになっています。'); msg.textContent = notes.join('\n'); },
+      function(){ document.getElementById('logo-msg').style.color = '#1f5f8b'; document.getElementById('logo-msg').textContent = '読み込んだファイルの写真をロゴに使います。変えたいときは、ロゴを選び直してください。'; });
+  } else clearLogo();
+  msg.textContent = notes.join('\n');
+  saveRemember();
+}
+function confirmReplace(){ return !formHasContent() || window.confirm('今の入力内容を、読み込んだ内容で置き換えます。よろしいですか？'); }
+
+document.getElementById('btn-load-vcf').addEventListener('click', function(){ document.getElementById('f-load').click(); });
+document.getElementById('f-load').addEventListener('change', function(e){
+  var f = e.target.files[0]; e.target.value = '';
+  var msg = document.getElementById('load-msg'); msg.textContent = '';
+  if(!f) return;
+  var r = new FileReader();
+  r.onerror = function(){ msg.textContent = 'このファイルは読み込めませんでした。'; };
+  r.onload = function(){
+    var v = parseVCard(String(r.result || ''));
+    if(!v){ msg.textContent = 'このファイルには連絡先（vCard）が入っていませんでした。.vcf のファイルを選んでください。'; return; }
+    if(!confirmReplace()) return;
+    applyImported(v, 'ファイル「' + f.name + '」');
+  };
+  r.readAsText(f, 'utf-8');
+});
+
+// Android の Chrome など、連絡先を選べるブラウザだけボタンを出す
+var hasContactPicker = ('contacts' in navigator) && ('ContactsManager' in window) && typeof navigator.contacts.select === 'function';
+if(hasContactPicker){
+  document.getElementById('btn-contacts').style.display = '';
+  document.getElementById('contacts-guide').textContent = '「連絡先から読み込む」で自分を選ぶと、名前・メール・電話番号が入ります（会社名・肩書き・よみは入らないので、あとで入れてください）。';
+}
+document.getElementById('btn-contacts').addEventListener('click', function(){
+  var msg = document.getElementById('load-msg'); msg.textContent = '';
+  var want = ['name','email','tel','icon'];
+  var go = function(props){
+    navigator.contacts.select(props, {multiple: false}).then(function(list){
+      if(!list || !list.length) return;
+      var c = list[0], v = {};
+      splitFullName((c.name || [])[0] || '', v);
+      v.email = (c.email || [])[0] || ''; v.tel = (c.tel || [])[0] || '';
+      if(!confirmReplace()) return;
+      var icon = (c.icon || [])[0];
+      if(icon){ var fr = new FileReader(); fr.onload = function(){ v.photo = fr.result; applyImported(v, '連絡先'); }; fr.onerror = function(){ applyImported(v, '連絡先'); }; fr.readAsDataURL(icon); }
+      else applyImported(v, '連絡先');
+    }).catch(function(){ msg.textContent = '連絡先を読み込めませんでした。もう一度試すか、「保存したファイル（vCard）を読み込む」を使ってください。'; });
+  };
+  if(navigator.contacts.getProperties) navigator.contacts.getProperties().then(function(av){ go(want.filter(function(p){ return av.indexOf(p) >= 0; })); }).catch(function(){ go(['name','email','tel']); });
+  else go(['name','email','tel']);
+});
+
+// --- 入力内容を保存（このジェネレーター用の項目つき vCard。連絡先アプリでもそのまま開けます）
+function backupFile(){
+  var d = readForm();
+  var errs = [];
+  if(!d.family) errs.push('保存する前に、姓を入れてください。');
+  if(d.line && !isValidLine(d.line)) errs.push('LINEの形が正しくありません。');
+  if(logoLoading) errs.push('ロゴの読み込みが終わってから保存してください。');
+  if(errs.length){ document.getElementById('save-msg').textContent = errs.join('\n'); return null; }
+  d.order = resolveOrder(d.orderChoice, d.family, d.given);
+  d.name = joinName(d.family, d.given, d.order);
+  var text = buildVCard(d, true, true, true);
+  var name = '名刺データ_' + (d.name || d.family).replace(/[\\\/:*?"<>|\s]+/g, '') + '.vcf';
+  return { name: name, text: text };
+}
+function downloadText(name, text){
+  var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], {type:'text/vcard;charset=utf-8'})); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+}
+document.getElementById('btn-save-local').addEventListener('click', function(){
+  var m = document.getElementById('save-msg'); m.textContent = '';
+  var b = backupFile(); if(!b) return;
+  downloadText(b.name, b.text);
+  m.textContent = '「' + b.name + '」を保存しました（端末のダウンロードに入ります）。次に直すときは、上の「保存したファイル（vCard）を読み込む」でこのファイルを選んでください。';
+});
+document.getElementById('btn-save-pick').addEventListener('click', function(){
+  var m = document.getElementById('save-msg'); m.textContent = '';
+  var b = backupFile(); if(!b) return;
+  // パソコンの Chrome・Edge：保存先を選ぶ画面
+  if(window.showSaveFilePicker){
+    window.showSaveFilePicker({ suggestedName: b.name, types: [{ description: '連絡先ファイル', accept: {'text/vcard': ['.vcf']} }] })
+      .then(function(h){ return h.createWritable().then(function(w){ return w.write(new Blob([b.text], {type:'text/vcard'})).then(function(){ return w.close(); }); }); })
+      .then(function(){ m.textContent = '「' + b.name + '」を、選んだ場所に保存しました。'; })
+      .catch(function(e){ if(e && e.name === 'AbortError') return; m.textContent = '保存できませんでした。「この端末に保存」を使ってください。'; });
+    return;
+  }
+  // スマホ：共有の画面（iPhoneは「ファイルに保存」から場所を選べます）
+  try{
+    var file = new File([b.text], b.name, {type: 'text/vcard'});
+    if(navigator.canShare && navigator.canShare({files: [file]})){
+      navigator.share({files: [file], title: b.name}).then(function(){ m.textContent = '保存先を選んで保存しました。'; })
+        .catch(function(e){ if(e && e.name === 'AbortError') return; m.textContent = '共有の画面を開けませんでした。「この端末に保存」を使ってください。'; });
+      return;
+    }
+  }catch(e){}
+  // 選ぶ画面が使えないブラウザ：通常の保存。Android の Chrome は設定で保存先を毎回聞けます
+  downloadText(b.name, b.text);
+  m.textContent = 'このブラウザでは保存先を選ぶ画面が出せないので、端末のダウンロードに保存しました。Androidで毎回場所を選びたいときは、Chromeの「設定」→「ダウンロード」→「保存先を確認する」をオンにしてください。';
+});
+
+// --- この端末に覚えておく（チェックしたときだけ。次に開いたら、読み込むか聞く）
+var REMEMBER_KEY = 'nurubo-card-maker';
+function storeGet(){ try{ return window.localStorage.getItem(REMEMBER_KEY); }catch(e){ return null; } }
+function storeSet(v){ try{ window.localStorage.setItem(REMEMBER_KEY, v); return true; }catch(e){ return false; } }
+function storeDel(){ try{ window.localStorage.removeItem(REMEMBER_KEY); }catch(e){} }
+var rememberTimer = null;
+function saveRemember(){
+  if(!document.getElementById('f-remember').checked) return;
+  clearTimeout(rememberTimer);
+  rememberTimer = setTimeout(function(){
+    var d = readForm(); d.logo = logoData; d.photo = photoB64; d.savedAt = new Date().toISOString();
+    if(!storeSet(JSON.stringify(d))){ d.logo = null; d.photo = null; storeSet(JSON.stringify(d)); }
+  }, 300);
+}
+document.getElementById('f-remember').addEventListener('change', function(e){
+  var m = document.getElementById('save-msg');
+  if(e.target.checked){
+    if(!window.confirm('この端末のブラウザに、入力内容（電話番号・LINE・ロゴも含みます）を覚えておきます。共用の端末では使わないでください。よろしいですか？')){ e.target.checked = false; return; }
+    m.textContent = 'この端末に覚えておきます。やめたいときは、チェックを外すと消えます。';
+    saveRemember();
+  } else {
+    clearTimeout(rememberTimer); storeDel();
+    m.textContent = 'この端末に覚えていた内容を消しました。';
+  }
+});
+FIELDS.concat(['f-order','f-line-pub']).forEach(function(id){ ['input','change'].forEach(function(ev){ document.getElementById(id).addEventListener(ev, saveRemember); }); });
+// ロゴは読み込みが終わってから覚える
+var _setGenBusy = setGenBusy;
+setGenBusy = function(busy){ _setGenBusy(busy); if(!busy) saveRemember(); };
+(function(){
+  var raw = storeGet(); if(!raw) return;
+  var saved; try{ saved = JSON.parse(raw); }catch(e){ storeDel(); return; }
+  document.getElementById('remember-banner').style.display = 'block';
+  document.getElementById('f-remember').checked = true;
+  document.getElementById('btn-remember-load').addEventListener('click', function(){
+    document.getElementById('remember-banner').style.display = 'none';
+    var logo = saved.logo, photo = saved.photo;
+    fillForm(saved);
+    if(logo){ ++logoSeq; logoData = logo; photoB64 = photo || null; document.getElementById('logo-msg').style.color = '#1f5f8b'; document.getElementById('logo-msg').textContent = '覚えておいたロゴを使います。変えたいときは、ロゴを選び直してください。'; }
+    document.getElementById('load-msg').textContent = '前回覚えておいた内容を読み込みました。';
+  });
+  document.getElementById('btn-remember-forget').addEventListener('click', function(){
+    storeDel(); document.getElementById('f-remember').checked = false;
+    document.getElementById('remember-banner').style.display = 'none';
+    document.getElementById('load-msg').textContent = 'この端末に覚えていた内容を消しました。';
+  });
+})();
 </script>
 </body>
 </html>
