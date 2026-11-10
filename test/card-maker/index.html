@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>デジタル名刺ジェネレーター（試作v1.7）</title>
+<title>デジタル名刺ジェネレーター（試作v1.7.1）</title>
 <style>
   body{font-family:-apple-system,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;background:#f4f6f5;color:#222;margin:0;padding:16px;}
   .wrap{max-width:720px;margin:0 auto;}
@@ -33,7 +33,7 @@
 </head>
 <body>
 <div class="wrap">
-<h1>デジタル名刺ジェネレーター（試作v1.7）</h1>
+<h1>デジタル名刺ジェネレーター（試作v1.7.1）</h1>
 <p class="note">情報を入れると、名刺ページ・連絡先ファイル（vCard）・QRコードを作ります。<br>
 <b>入力した情報はこのページの中だけで処理され、どこにも送信されません。</b>このファイル1つで動きます。</p>
 
@@ -133,8 +133,12 @@
     <div style="background:#eef2f8;border-radius:10px;padding:10px 12px;margin:10px 0;">
       <b>Apple Watch の文字盤にQRを出したいとき</b><br>
       <select id="watch-kind" aria-label="Apple Watchに出すQRの種類"></select>
+      <select id="watch-layout" aria-label="QRを置く場所">
+        <option value="bottom">QRを下に（時刻は上）</option>
+        <option value="left">QRを左に（時刻は右に縦）</option>
+      </select>
       <button id="btn-watch-qr">Apple Watch用の画像を保存</button>
-      <p class="note" style="margin:2px 0 0;">黒い背景にQRだけを入れた、時計の画面にぴったりの画像ができます。iPhoneでは「画像を保存」を選んで写真アプリに入れてください。そのあと iPhone の「Watch」アプリ →「文字盤ギャラリー」→「写真」でこの画像を選び、時刻の位置を「上」にすると、針や飾りのないQRだけの文字盤になります（時刻の数字だけは Apple の決まりで消せないので、QRに重ならない上の余白に出るようにしてあります）。読み取りにくいときは「公開版」か「ページ用」に切り替えてください。</p>
+      <p class="note" style="margin:2px 0 0;">黒い背景にQRだけを入れた、時計の画面にぴったりの画像ができます。iPhoneでは「画像を保存」を選んで写真アプリに入れてください。そのあと iPhone の「Watch」アプリ →「文字盤ギャラリー」→「写真」でこの画像を選ぶと、針や飾りのないQRだけの文字盤になります。時刻の数字だけは Apple の決まりで消せないので、QRを画面の3分の2ほどに小さくして、数字と重ならないように寄せてあります。時刻が上に出るなら「QRを下に」、時刻が右に縦に出るなら「QRを左に」を選んでください。読み取りにくいときは「公開版」か「ページ用」に切り替えてください。</p>
     </div>
     <p class="note"><b>保存先は自分で選べます：</b>スマホで保存ボタンを押すと共有の画面が出ます。iPhoneは「画像を保存」で<b>写真アプリ</b>、「ファイルに保存」で<b>ファイルアプリ</b>に入ります。Androidは「フォト」「ファイル」「ドライブ」などから選べます。パソコンでは、デスクトップなど保存する場所を選ぶ画面が出ます。<br>登録用QRは、スマホのカメラで読み取ると連絡先の登録画面が開きます（ネット不要）。登録を完了するには、相手のスマホで最後に「保存」を押してもらう必要があります。キャッチフレーズは連絡先のメモ欄に残ります。ロゴ・写真は、容量の都合でQRには入りません（連絡先ファイルと名刺ページには入ります）。</p>
   </div>
@@ -3077,17 +3081,18 @@ function fillWatchKinds(){
   WATCH_KINDS.forEach(function(k){ if(qrTexts[k[0]]){ var o = document.createElement('option'); o.value = k[0]; o.textContent = k[1]; sel.appendChild(o); } });
   if(keep && qrTexts[keep]) sel.value = keep;
 }
-// 縦長（およそ 5:6）の黒い画像。上の約4分の1は時刻用に空け、下に白いQRを置く
-function makeWatchCanvas(text){
-  var W = 820, H = 1000, top = 250, side = 30, bottom = 40;
+// 縦長（およそ 5:6）の黒い画像。QRは画面の幅の約3分の2にして、時刻の数字と重ならないように寄せる
+function makeWatchCanvas(text, layout){
+  var W = 820, H = 1000, side = 40, bottom = 50, box = Math.round(W * 2 / 3);
   var probe = qrcode(0,'M'); probe.addData(text,'Byte'); probe.make();
-  var total = probe.getModuleCount() + 8;
-  var cell = Math.floor(Math.min(W - side*2, H - top - bottom) / total);
+  var cell = Math.max(1, Math.floor(box / (probe.getModuleCount() + 8)));
   var q = makeQRCanvas(text, cell);
   var c = document.createElement('canvas'); c.width = W; c.height = H;
   var ctx = c.getContext('2d');
   ctx.fillStyle = '#000'; ctx.fillRect(0,0,W,H);
-  var x = Math.round((W - q.width)/2), y = top + Math.round((H - top - bottom - q.height)/2);
+  var x, y;
+  if(layout === 'left'){ x = side; y = Math.round((H - q.height)/2); }
+  else { x = Math.round((W - q.width)/2); y = H - bottom - q.height; }
   ctx.drawImage(q, x, y);
   return c;
 }
@@ -3095,7 +3100,8 @@ document.getElementById('btn-watch-qr').addEventListener('click', function(){
   fillWatchKinds();
   var id = document.getElementById('watch-kind').value, t = qrTexts[id];
   if(!t){ toast('先に「生成する」を押してください。'); return; }
-  saveQRImage(makeWatchCanvas(t), 'AppleWatch用_' + QR_NAMES[id] + '.png');
+  var lay = document.getElementById('watch-layout').value;
+  saveQRImage(makeWatchCanvas(t, lay), 'AppleWatch用_' + (lay === 'left' ? '左寄せ_' : '下寄せ_') + QR_NAMES[id] + '.png');
 });
 document.getElementById('watch-kind').addEventListener('focus', fillWatchKinds);
 document.getElementById('btn-home-qr').addEventListener('click', function(){
