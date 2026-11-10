@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>デジタル名刺ジェネレーター（試作v1.7.1）</title>
+<title>デジタル名刺ジェネレーター（試作v1.7.2）</title>
 <style>
   body{font-family:-apple-system,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;background:#f4f6f5;color:#222;margin:0;padding:16px;}
   .wrap{max-width:720px;margin:0 auto;}
@@ -33,7 +33,7 @@
 </head>
 <body>
 <div class="wrap">
-<h1>デジタル名刺ジェネレーター（試作v1.7.1）</h1>
+<h1>デジタル名刺ジェネレーター（試作v1.7.2）</h1>
 <p class="note">情報を入れると、名刺ページ・連絡先ファイル（vCard）・QRコードを作ります。<br>
 <b>入力した情報はこのページの中だけで処理され、どこにも送信されません。</b>このファイル1つで動きます。</p>
 
@@ -134,11 +134,14 @@
       <b>Apple Watch の文字盤にQRを出したいとき</b><br>
       <select id="watch-kind" aria-label="Apple Watchに出すQRの種類"></select>
       <select id="watch-layout" aria-label="QRを置く場所">
-        <option value="bottom">QRを下に（時刻は上）</option>
-        <option value="left">QRを左に（時刻は右に縦）</option>
+        <option value="bottom">QRを下に（時刻が上のとき）</option>
+        <option value="top">QRを上に（時刻が下のとき）</option>
+        <option value="left">QRを左に（時刻が右のとき）</option>
+        <option value="right">QRを右に（時刻が左のとき）</option>
       </select>
       <button id="btn-watch-qr">Apple Watch用の画像を保存</button>
-      <p class="note" style="margin:2px 0 0;">黒い背景にQRだけを入れた、時計の画面にぴったりの画像ができます。iPhoneでは「画像を保存」を選んで写真アプリに入れてください。そのあと iPhone の「Watch」アプリ →「文字盤ギャラリー」→「写真」でこの画像を選ぶと、針や飾りのないQRだけの文字盤になります。時刻の数字だけは Apple の決まりで消せないので、QRを画面の3分の2ほどに小さくして、数字と重ならないように寄せてあります。時刻が上に出るなら「QRを下に」、時刻が右に縦に出るなら「QRを左に」を選んでください。読み取りにくいときは「公開版」か「ページ用」に切り替えてください。</p>
+      <button id="btn-watch-all">上下左右の4枚をまとめて保存</button>
+      <p class="note" style="margin:2px 0 0;">黒い背景にQRだけを入れた、時計の画面にぴったりの画像ができます。iPhoneでは「画像を保存」（4枚のときは「4枚の画像を保存」）を選んで写真アプリに入れてください。そのあと iPhone の「Watch」アプリ →「文字盤ギャラリー」→「写真」でこの画像を選ぶと、針や飾りのないQRだけの文字盤になります。時刻の数字だけは Apple の決まりで消せないので、QRを画面の3分の2ほどに小さくして、上・下・左・右のどこかに寄せてあります。時刻がどこに出るかは時計の設定や機種で変わるので、迷ったら4枚まとめて保存して、数字と重ならない1枚を選んでください。読み取りにくいときは「公開版」か「ページ用」に切り替えてください。</p>
     </div>
     <p class="note"><b>保存先は自分で選べます：</b>スマホで保存ボタンを押すと共有の画面が出ます。iPhoneは「画像を保存」で<b>写真アプリ</b>、「ファイルに保存」で<b>ファイルアプリ</b>に入ります。Androidは「フォト」「ファイル」「ドライブ」などから選べます。パソコンでは、デスクトップなど保存する場所を選ぶ画面が出ます。<br>登録用QRは、スマホのカメラで読み取ると連絡先の登録画面が開きます（ネット不要）。登録を完了するには、相手のスマホで最後に「保存」を押してもらう必要があります。キャッチフレーズは連絡先のメモ欄に残ります。ロゴ・写真は、容量の都合でQRには入りません（連絡先ファイルと名刺ページには入ります）。</p>
   </div>
@@ -3092,16 +3095,46 @@ function makeWatchCanvas(text, layout){
   ctx.fillStyle = '#000'; ctx.fillRect(0,0,W,H);
   var x, y;
   if(layout === 'left'){ x = side; y = Math.round((H - q.height)/2); }
+  else if(layout === 'right'){ x = W - side - q.width; y = Math.round((H - q.height)/2); }
+  else if(layout === 'top'){ x = Math.round((W - q.width)/2); y = bottom; }
   else { x = Math.round((W - q.width)/2); y = H - bottom - q.height; }
   ctx.drawImage(q, x, y);
   return c;
 }
-document.getElementById('btn-watch-qr').addEventListener('click', function(){
+var WATCH_LAYOUTS = {bottom:'下寄せ', top:'上寄せ', left:'左寄せ', right:'右寄せ'};
+function watchName(id, lay){ return 'AppleWatch用_' + WATCH_LAYOUTS[lay] + '_' + QR_NAMES[id] + '.png'; }
+function watchPick(){
   fillWatchKinds();
-  var id = document.getElementById('watch-kind').value, t = qrTexts[id];
-  if(!t){ toast('先に「生成する」を押してください。'); return; }
+  var id = document.getElementById('watch-kind').value;
+  if(!qrTexts[id]){ toast('先に「生成する」を押してください。'); return null; }
+  return id;
+}
+document.getElementById('btn-watch-qr').addEventListener('click', function(){
+  var id = watchPick(); if(!id) return;
   var lay = document.getElementById('watch-layout').value;
-  saveQRImage(makeWatchCanvas(t, lay), 'AppleWatch用_' + (lay === 'left' ? '左寄せ_' : '下寄せ_') + QR_NAMES[id] + '.png');
+  saveQRImage(makeWatchCanvas(qrTexts[id], lay), watchName(id, lay));
+});
+// 上下左右の4枚をまとめて保存。スマホは共有の画面に4枚を渡す。使えないときは1枚ずつダウンロード
+document.getElementById('btn-watch-all').addEventListener('click', function(){
+  var id = watchPick(); if(!id) return;
+  var lays = ['top','bottom','left','right'];
+  Promise.all(lays.map(function(lay){
+    return new Promise(function(res){ makeWatchCanvas(qrTexts[id], lay).toBlob(function(b){ res({blob:b, name:watchName(id, lay)}); }, 'image/png'); });
+  })).then(function(items){
+    var each = function(){ items.forEach(function(it, n){ setTimeout(function(){ downloadBlob(it.blob, it.name); }, n * 400); }); };
+    if(deviceKind() !== 'pc'){
+      try{
+        var files = items.map(function(it){ return new File([it.blob], it.name, {type:'image/png'}); });
+        if(navigator.canShare && navigator.canShare({files: files})){
+          navigator.share({files: files}).then(function(){
+            toast(deviceKind() === 'ios' ? '「4枚の画像を保存」を選んだときは、写真アプリに4枚入っています。' : '選んだ保存先に4枚入っています。');
+          }).catch(function(e){ if(e && e.name === 'AbortError') return; each(); });
+          return;
+        }
+      }catch(e){}
+    }
+    each();
+  });
 });
 document.getElementById('watch-kind').addEventListener('focus', fillWatchKinds);
 document.getElementById('btn-home-qr').addEventListener('click', function(){
