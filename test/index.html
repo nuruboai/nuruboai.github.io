@@ -244,12 +244,19 @@ footer .motto{font-family:var(--display);font-weight:700;letter-spacing:.12em;co
 .sns-tile:hover{background:var(--paper);border-color:var(--blue);box-shadow:0 6px 18px #123a5e12}
 .sns-tile::after{content:"↗";position:absolute;top:10px;right:14px;color:var(--ink-soft);font-size:16px}
 .sns-tile .sns-icon{display:flex;align-items:center;justify-content:center;width:52px;height:52px;border-radius:15px;margin-bottom:5px;background:var(--sns-tint)}
-.sns-tile img{display:block;width:27px;height:27px}
+.sns-tile .sns-icon img{display:block;width:27px;height:27px}
+.sns-tile .sns-qr{display:block;width:108px;max-width:100%;height:auto;margin-top:7px}
 .sns-tile strong{font-family:var(--display);font-size:1.05rem;line-height:1.5}
 .sns-tile small{color:var(--ink-soft);font-size:.8rem;line-height:1.5}
 .sns-youtube{--sns-tint:#fff0f0}.sns-instagram{--sns-tint:#faf0fc}.sns-note{--sns-tint:#eaf8f2}.sns-x{--sns-tint:#eff2f5}
 @media(max-width:600px){.sns-links{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.sns-tile{min-height:156px;padding:20px 12px}}
 @media(prefers-reduced-motion:reduce){.sns-tile{transition:none}}
+@media print{
+  .sns-links{grid-template-columns:repeat(4,minmax(0,1fr));gap:3mm;break-inside:avoid}
+  .sns-tile{min-height:0;padding:3mm 1mm;box-shadow:none;break-inside:avoid}
+  .sns-tile::after{content:none}
+  .sns-tile .sns-qr{width:32mm}
+}
 footer .flinks a{color:var(--ink-soft);text-decoration:none;font-weight:500}
 footer .flinks a:hover{color:var(--blue)}
 /* Digital business card: shared by both audience tabs. */
@@ -356,18 +363,22 @@ footer .flinks a:hover{color:var(--blue)}
         <a class="sns-tile sns-youtube" href="https://www.youtube.com/@nuruboai" target="_blank" rel="noopener" aria-label="YouTubeチャンネル（新しいタブ）">
           <span class="sns-icon"><img src="social-icons/youtube.svg" width="27" height="27" alt="" loading="lazy"></span>
           <strong>YouTube</strong><small>動画を見る</small>
+          <img class="sns-qr" src="social-icons/youtube-qr.svg" width="108" height="108" alt="">
         </a>
         <a class="sns-tile sns-instagram" href="https://www.instagram.com/nuruboai" target="_blank" rel="noopener" aria-label="Instagram @nuruboai（新しいタブ）">
           <span class="sns-icon"><img src="social-icons/instagram.svg" width="27" height="27" alt="" loading="lazy"></span>
           <strong>Instagram</strong><small>写真・投稿を見る</small>
+          <img class="sns-qr" src="social-icons/instagram-qr.svg" width="108" height="108" alt="">
         </a>
         <a class="sns-tile sns-note" href="https://note.com/nuruboai" target="_blank" rel="noopener" aria-label="note nuruboai（新しいタブ）">
           <span class="sns-icon"><img src="social-icons/note.svg" width="27" height="27" alt="" loading="lazy"></span>
           <strong>note</strong><small>記事を読む</small>
+          <img class="sns-qr" src="social-icons/note-qr.svg" width="108" height="108" alt="">
         </a>
         <a class="sns-tile sns-x" href="https://x.com/nuruboai" target="_blank" rel="noopener" aria-label="X @nuruboai（新しいタブ）">
           <span class="sns-icon"><img src="social-icons/x.svg" width="27" height="27" alt="" loading="lazy"></span>
           <strong>X</strong><small>投稿を見る</small>
+          <img class="sns-qr" src="social-icons/x-qr.svg" width="108" height="108" alt="">
         </a>
       </nav>
     </div>
