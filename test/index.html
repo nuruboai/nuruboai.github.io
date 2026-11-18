@@ -46,7 +46,7 @@ header.site .wrap{display:flex;align-items:center;justify-content:space-between;
 .audience-tab[aria-selected="true"]{background:var(--blue);color:#fff}
 .shared-contact-link{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px 14px;border:1px solid var(--line);border-radius:999px;text-decoration:none;color:var(--blue);font-size:.9rem;font-weight:700;white-space:nowrap}
 .shared-contact-link:hover{background:var(--mist)}
-.header-links{display:flex;align-items:center;gap:8px}
+.header-links{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .audience-panel[hidden]{display:none}
 .audience-panel:focus-visible{outline:3px solid var(--leaf);outline-offset:-3px}
 .audience-panel section[id],#contact,#digital-card,#booking{scroll-margin-top:88px}
@@ -197,12 +197,12 @@ footer .motto{font-family:var(--display);font-weight:700;letter-spacing:.12em;co
 @media (max-width:720px){
   header.site .wrap{justify-content:center;gap:10px}
   .brand{margin-right:auto}
-  .header-links{order:1}
+  .header-links{order:1;flex-basis:100%;justify-content:center}
   .shared-contact-link{padding:6px 10px;font-size:.85rem}
   .audience-tabs{order:2;width:100%}
   .audience-tab{flex:1;padding:8px 12px}
   .personal-menu ul{justify-content:center}
-  .audience-panel section[id],#contact,#digital-card,#booking{scroll-margin-top:150px}
+  .audience-panel section[id],#contact,#digital-card,#booking{scroll-margin-top:180px}
 }
 @media(max-width:440px){header.site .brand img{height:26px}}
 @media(max-width:360px){.audience-panel section[id],#contact,#digital-card,#booking{scroll-margin-top:210px}}
@@ -322,8 +322,8 @@ footer .flinks a:hover{color:var(--blue)}
       <button class="audience-tab" type="button" role="tab" id="business-tab" aria-controls="business-panel" aria-selected="false" tabindex="-1">企業向け</button>
     </div>
     <nav class="header-links" aria-label="共通ページ内メニュー">
-      <a class="shared-contact-link" href="#booking">ご予約</a>
       <a class="shared-contact-link" href="#contact">お問い合わせ</a>
+      <a class="shared-contact-link" href="#booking">ランチのお誘い</a>
       <a class="shared-contact-link" href="#digital-card">デジタル名刺</a>
     </nav>
   </div>
