@@ -46,10 +46,10 @@ header.site .wrap{display:flex;align-items:center;justify-content:space-between;
 .audience-tab[aria-selected="true"]{background:var(--blue);color:#fff}
 .shared-contact-link{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px 14px;border:1px solid var(--line);border-radius:999px;text-decoration:none;color:var(--blue);font-size:.9rem;font-weight:700;white-space:nowrap}
 .shared-contact-link:hover{background:var(--mist)}
-.header-links{display:flex;align-items:center;gap:8px}
+.header-links{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .audience-panel[hidden]{display:none}
 .audience-panel:focus-visible{outline:3px solid var(--leaf);outline-offset:-3px}
-.audience-panel section[id],#contact,#digital-card{scroll-margin-top:88px}
+.audience-panel section[id],#contact,#digital-card,#booking{scroll-margin-top:88px}
 .personal-menu{border-bottom:1px solid var(--line);background:var(--paper)}
 .personal-menu .wrap{padding-block:8px}
 nav ul{display:flex;gap:4px;list-style:none;margin:0;padding:0;flex-wrap:wrap}
@@ -109,6 +109,13 @@ h2{font-family:var(--display);font-weight:800;font-size:1.6rem;margin:0 0 6px;te
 .faq-cat:first-child{margin-top:0}
 .faq-cat::after{content:"";flex:1;height:1px;background:var(--line)}
 #safety .q{background:var(--leaf)}
+
+/* booking */
+.booking-card{max-width:820px;margin:0 auto;padding:32px 28px;border:1px solid var(--line);border-radius:22px;background:var(--mist);text-align:center}
+.booking-card p{margin:12px auto;color:var(--ink-soft);max-width:58ch}
+.booking-card .btns{justify-content:center}
+.booking-card .booking-hours{font-weight:700;color:var(--ink)}
+@media(max-width:600px){.booking-card{padding:26px 18px}.booking-card .btn{justify-content:center;width:100%}}
 
 /* contact card */
 .contact-wrap{max-width:820px;margin:0 auto}
@@ -190,15 +197,15 @@ footer .motto{font-family:var(--display);font-weight:700;letter-spacing:.12em;co
 @media (max-width:720px){
   header.site .wrap{justify-content:center;gap:10px}
   .brand{margin-right:auto}
-  .header-links{order:1}
+  .header-links{order:1;flex-basis:100%;justify-content:center}
   .shared-contact-link{padding:6px 10px;font-size:.85rem}
   .audience-tabs{order:2;width:100%}
   .audience-tab{flex:1;padding:8px 12px}
   .personal-menu ul{justify-content:center}
-  .audience-panel section[id],#contact,#digital-card{scroll-margin-top:150px}
+  .audience-panel section[id],#contact,#digital-card,#booking{scroll-margin-top:180px}
 }
 @media(max-width:440px){header.site .brand img{height:26px}}
-@media(max-width:360px){.audience-panel section[id],#contact,#digital-card{scroll-margin-top:210px}}
+@media(max-width:360px){.audience-panel section[id],#contact,#digital-card,#booking{scroll-margin-top:210px}}
 
 /* movie & sns (added 2026-11-01) */
 .movie-frame{max-width:820px;margin:26px auto 0;aspect-ratio:16/9;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:#000}
@@ -316,6 +323,7 @@ footer .flinks a:hover{color:var(--blue)}
     </div>
     <nav class="header-links" aria-label="共通ページ内メニュー">
       <a class="shared-contact-link" href="#contact">お問い合わせ</a>
+      <a class="shared-contact-link" href="#booking">ランチのお誘い</a>
       <a class="shared-contact-link" href="#digital-card">デジタル名刺</a>
     </nav>
   </div>
@@ -804,6 +812,20 @@ footer .flinks a:hover{color:var(--blue)}
     </section>
   </div>
 
+  <section class="band white" id="booking" aria-labelledby="booking-title">
+    <div class="wrap">
+      <div class="booking-card">
+        <h2 id="booking-title">ご相談も、ランチのお誘いも。</h2>
+        <p>空いている日時を選んで、気軽にお声がけください。</p>
+        <p class="booking-hours">ランチは土日を含めて毎日 12:00〜13:00。<br>ご相談・打ち合わせは、予約可能な平日 13:00〜17:00。</p>
+        <div class="btns">
+          <a class="btn primary" href="https://calendar.app.google/R6tJKj5CqtKJaVhn7" target="_blank" rel="noopener" aria-label="ご相談・ランチのお誘い（Googleの予約ページを新しいタブで開く）">ご相談・ランチのお誘い</a>
+        </div>
+        <p class="note">Googleの予約ページが新しいタブで開きます。12:00〜13:00はランチのお誘い専用です。</p>
+      </div>
+    </div>
+  </section>
+
   <section class="band" id="digital-card" aria-labelledby="digital-card-title">
     <div class="wrap">
       <div class="digital-card-panel">
@@ -924,7 +946,7 @@ footer .flinks a:hover{color:var(--blue)}
   });
   window.addEventListener('hashchange', () => {
     // Shared sections belong to both audiences; keep the current tab.
-    if (!['#contact', '#digital-card'].includes(location.hash)) selectTab(selectedFromHash());
+    if (!['#contact', '#digital-card', '#booking'].includes(location.hash)) selectTab(selectedFromHash());
   });
   // Every fresh page load starts with the personal screen, including old business links.
   selectTab(0);
