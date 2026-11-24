@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>チャオのあいさつ</title>
+<style>
+  :root { color-scheme: light; }
+  body { margin: 0; min-height: 100vh; background: #f8f3ed; color: #392f36;
+         font: 18px/1.6 system-ui, -apple-system, "Hiragino Sans", sans-serif;
+         display: flex; flex-direction: column; align-items: center; }
+  main { width: 100%; max-width: 420px; padding: 28px 20px 40px; box-sizing: border-box; text-align: center; }
+  h1 { font-size: 24px; margin: 0 0 16px; }
+  .face { width: 256px; max-width: 80%; image-rendering: pixelated; background: #000;
+          border-radius: 14px; padding: 12px; box-sizing: content-box; }
+  .face.talking { animation: bob .35s ease-in-out infinite alternate; }
+  @keyframes bob { to { transform: translateY(-4px); } }
+  .buttons { display: grid; gap: 14px; margin-top: 24px; }
+  button { font: inherit; font-size: 20px; font-weight: 600; padding: 18px 12px; border: 0;
+           border-radius: 16px; background: #70576a; color: #fff; cursor: pointer;
+           box-shadow: 0 3px 0 #4f3c4b; -webkit-tap-highlight-color: transparent; }
+  button:active { transform: translateY(2px); box-shadow: 0 1px 0 #4f3c4b; }
+  button.playing { background: #b0708f; }
+  p.note { font-size: 15px; color: #7a6c74; margin-top: 22px; }
+  a { color: #70576a; }
+</style>
+</head>
+<body>
+<main>
+  <h1>チャオのあいさつ</h1>
+  <img class="face" id="face" src="ciao.png" alt="チャオの顔">
+  <div class="buttons">
+    <button data-src="ohayou.mp3">おはよう</button>
+    <button data-src="ittera.mp3">いってらっしゃい</button>
+    <button data-src="asagohan.mp3">朝ごはん</button>
+  </div>
+  <p class="note">ボタンを押すと、チャオがしゃべるよ。</p>
+  <p class="note"><a href="/">nurubo のトップへ</a></p>
+</main>
+<script>
+  const audio = new Audio();
+  const face = document.getElementById('face');
+  let current = null;
+  function reset() {
+    face.classList.remove('talking');
+    if (current) current.classList.remove('playing');
+    current = null;
+  }
+  audio.addEventListener('ended', reset);
+  document.querySelectorAll('button[data-src]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      audio.pause();
+      reset();
+      audio.src = btn.dataset.src;
+      audio.currentTime = 0;
+      audio.play().then(() => {
+        current = btn;
+        btn.classList.add('playing');
+        face.classList.add('talking');
+      }).catch(reset);
+    });
+  });
+</script>
+</body>
+</html>
